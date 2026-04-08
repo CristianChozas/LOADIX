@@ -1,6 +1,12 @@
 # Dependencies
 node_modules/
 
+# Local-only internal work
+frontend/
+documents/
+agents/
+AGENTS.md
+
 # Build outputs
 .next/
 out/
@@ -29,9 +35,6 @@ yarn-error.log*
 .vscode/
 *.swp
 *.swo
-
-# Java / Maven
-.mvn/wrapper/maven-wrapper.jar
 
 # Python leftovers if any tools generate them
 __pycache__/
