@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  repo-sanity:
+    name: Repo Sanity Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify required files and directories
+        run: |
+          test -f README.md
+          test -f AGENTS.md
+          test -f documents/TICKETS_LOADIX.md
+          test -f docker-compose.yml
+          test -d backend
+          test -d frontend
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config > /dev/null
