@@ -12,3 +12,8 @@ loadix:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
     jwt-secret: ${JWT_SECRET:change-me-to-a-long-random-secret-with-at-least-32-characters}
     jwt-expiration: ${JWT_EXPIRATION:PT24H}
+  rate-limit:
+    public-capacity: ${RATE_LIMIT_PUBLIC_CAPACITY:60}
+    public-window: ${RATE_LIMIT_PUBLIC_WINDOW:PT1M}
+    auth-capacity: ${RATE_LIMIT_AUTH_CAPACITY:10}
+    auth-window: ${RATE_LIMIT_AUTH_WINDOW:PT15M}

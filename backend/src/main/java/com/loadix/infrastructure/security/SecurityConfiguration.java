@@ -15,7 +15,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.loadix.infrastructure.config.RateLimitProperties;
 import com.loadix.infrastructure.config.SecurityProperties;
+import com.loadix.infrastructure.http.filter.IpRateLimitingFilter;
 import com.loadix.infrastructure.http.filter.RequestLoggingFilter;
 
 @Configuration
@@ -23,17 +25,23 @@ import com.loadix.infrastructure.http.filter.RequestLoggingFilter;
 public class SecurityConfiguration {
 
     private final SecurityProperties securityProperties;
+    private final RateLimitProperties rateLimitProperties;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RequestLoggingFilter requestLoggingFilter;
+    private final IpRateLimitingFilter ipRateLimitingFilter;
 
     public SecurityConfiguration(
             SecurityProperties securityProperties,
+            RateLimitProperties rateLimitProperties,
             JwtAuthenticationFilter jwtAuthenticationFilter,
-            RequestLoggingFilter requestLoggingFilter
+            RequestLoggingFilter requestLoggingFilter,
+            IpRateLimitingFilter ipRateLimitingFilter
     ) {
         this.securityProperties = securityProperties;
+        this.rateLimitProperties = rateLimitProperties;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.requestLoggingFilter = requestLoggingFilter;
+        this.ipRateLimitingFilter = ipRateLimitingFilter;
     }
 
     @Bean
@@ -49,7 +57,8 @@ public class SecurityConfiguration {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(requestLoggingFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(jwtAuthenticationFilter, RequestLoggingFilter.class)
+                .addFilterAfter(ipRateLimitingFilter, RequestLoggingFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, IpRateLimitingFilter.class)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint((request, response, exception) -> response.sendError(401, "Unauthorized"))
                         .accessDeniedHandler((request, response, exception) -> response.sendError(403, "Forbidden"))
