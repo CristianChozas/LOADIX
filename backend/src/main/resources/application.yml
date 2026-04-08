@@ -6,3 +6,9 @@ spring:
 
 server:
   port: ${SERVER_PORT:8081}
+
+loadix:
+  security:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+    jwt-secret: ${JWT_SECRET:change-me-to-a-long-random-secret-with-at-least-32-characters}
+    jwt-expiration: ${JWT_EXPIRATION:PT24H}
