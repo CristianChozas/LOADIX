@@ -31,6 +31,9 @@ Kernel de comportamiento para reconstruir LOADIX en un repo nuevo, alcanzando el
 
 ## Commits
 - El mensaje de commit debe seguir el titulo del ticket activo.
+- Todos los commits deben escribirse en ingles.
+- Formato obligatorio: `#<ticket> - <short title>`.
+- Ejemplo: `#001 - Bootstrap`.
 - Cada commit debe quedar acotado a un bloque real y validable.
 - No mezclar infraestructura, frontend, backend y ruido no relacionado en un mismo commit salvo que formen un bloque logico real.
 - Antes de hacer commit, comprobar siempre `git status`, diff y alcance.

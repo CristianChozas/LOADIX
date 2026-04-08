@@ -15,6 +15,8 @@
 - CI, Docker y OpenAPI aparecen temprano porque en un proyecto real no se dejan para el final.
 - Cada ticket debe poder reconstruirse, validarse y commitearse como una unidad coherente.
 - El resultado final debe quedar 1:1 con el repo original en alcance real, aunque el historial nuevo sea mejor.
+- Los titulos de tickets y commits se escriben en ingles.
+- Convencion de commits: `#<ticket> - <short title>`.
 
 ---
 
