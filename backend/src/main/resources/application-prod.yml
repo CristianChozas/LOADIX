@@ -2,6 +2,16 @@ spring:
   config:
     activate:
       on-profile: prod
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:loadix}
+    username: ${POSTGRES_USER:loadix}
+    password: ${POSTGRES_PASSWORD:loadix}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  flyway:
+    enabled: true
 
 logging:
   level:

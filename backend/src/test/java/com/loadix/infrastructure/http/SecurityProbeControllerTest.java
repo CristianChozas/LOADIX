@@ -12,10 +12,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.loadix.infrastructure.security.JwtTokenService;
+import com.loadix.support.IntegrationTestContainers;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class SecurityProbeControllerTest {
+class SecurityProbeControllerTest extends IntegrationTestContainers {
 
     @Autowired
     private MockMvc mockMvc;

@@ -11,9 +11,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.loadix.support.IntegrationTestContainers;
+
 @SpringBootTest
 @AutoConfigureMockMvc
-class ValidationProbeControllerTest {
+class ValidationProbeControllerTest extends IntegrationTestContainers {
 
     @Autowired
     private MockMvc mockMvc;
