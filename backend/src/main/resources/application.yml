@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: loadix-backend-api
+  profiles:
+    default: dev
+
+server:
+  port: ${SERVER_PORT:8081}
