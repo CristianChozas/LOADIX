@@ -19,12 +19,14 @@ class InfrastructureHealthIntegrationTest extends IntegrationTestContainers {
     private TestRestTemplate restTemplate;
 
     @Test
+    @SuppressWarnings("unchecked")
     void returnsHealthPayload() {
-        ResponseEntity<Map> response = restTemplate.getForEntity("/api/v1/health", Map.class);
+        ResponseEntity<?> response = restTemplate.getForEntity("/api/v1/health", Map.class);
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).containsEntry("status", "ok");
-        assertThat(response.getBody()).containsEntry("service", "loadix-backend-api");
-        assertThat(response.getBody()).containsEntry("version", "0.0.1-SNAPSHOT");
+        assertThat(body).containsEntry("status", "ok");
+        assertThat(body).containsEntry("service", "loadix-backend-api");
+        assertThat(body).containsEntry("version", "0.0.1-SNAPSHOT");
     }
 }

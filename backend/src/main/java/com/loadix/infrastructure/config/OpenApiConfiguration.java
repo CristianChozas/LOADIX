@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Configuration;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
-import io.swagger.v3.oas.models.security.SecurityScheme;
 
 @Configuration
 public class OpenApiConfiguration {
@@ -17,11 +15,6 @@ public class OpenApiConfiguration {
                 .info(new Info()
                         .title("LOADIX Backend API")
                         .version("0.0.1-SNAPSHOT")
-                        .description("Core backend API for LOADIX."))
-                .schemaRequirement("bearerAuth", new SecurityScheme()
-                        .type(SecurityScheme.Type.HTTP)
-                        .scheme("bearer")
-                        .bearerFormat("JWT"))
-                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
+                        .description("Core backend API for LOADIX."));
     }
 }

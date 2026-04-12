@@ -9,13 +9,13 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.loadix.infrastructure.config.RateLimitProperties;
 import com.loadix.infrastructure.config.SecurityProperties;
 import com.loadix.infrastructure.http.filter.IpRateLimitingFilter;
 import com.loadix.infrastructure.http.filter.RequestLoggingFilter;
@@ -25,21 +25,15 @@ import com.loadix.infrastructure.http.filter.RequestLoggingFilter;
 public class SecurityConfiguration {
 
     private final SecurityProperties securityProperties;
-    private final RateLimitProperties rateLimitProperties;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RequestLoggingFilter requestLoggingFilter;
     private final IpRateLimitingFilter ipRateLimitingFilter;
 
     public SecurityConfiguration(
             SecurityProperties securityProperties,
-            RateLimitProperties rateLimitProperties,
-            JwtAuthenticationFilter jwtAuthenticationFilter,
             RequestLoggingFilter requestLoggingFilter,
             IpRateLimitingFilter ipRateLimitingFilter
     ) {
         this.securityProperties = securityProperties;
-        this.rateLimitProperties = rateLimitProperties;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.requestLoggingFilter = requestLoggingFilter;
         this.ipRateLimitingFilter = ipRateLimitingFilter;
     }
@@ -51,16 +45,17 @@ public class SecurityConfiguration {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contracts/validation-probe").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(requestLoggingFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(requestLoggingFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(ipRateLimitingFilter, RequestLoggingFilter.class)
-                .addFilterAfter(jwtAuthenticationFilter, IpRateLimitingFilter.class)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint((request, response, exception) -> response.sendError(401, "Unauthorized"))
                         .accessDeniedHandler((request, response, exception) -> response.sendError(403, "Forbidden"))
@@ -80,5 +75,10 @@ public class SecurityConfiguration {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
     }
 }

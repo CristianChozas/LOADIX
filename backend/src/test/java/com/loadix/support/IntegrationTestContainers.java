@@ -10,12 +10,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers(disabledWithoutDocker = true)
 public abstract class IntegrationTestContainers {
 
+    @SuppressWarnings("resource")
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("loadix")
             .withUsername("loadix")
             .withPassword("loadix");
 
+    @SuppressWarnings("resource")
     @Container
     static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7-alpine")
             .withExposedPorts(6379);
