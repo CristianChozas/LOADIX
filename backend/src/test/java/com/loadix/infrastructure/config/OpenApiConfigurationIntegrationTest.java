@@ -22,6 +22,6 @@ class OpenApiConfigurationIntegrationTest extends IntegrationTestContainers {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).contains("LOADIX Backend API");
-        assertThat(response.getBody()).doesNotContain("cookieAuth");
+        assertThat(response.getBody()).contains("cookieAuth");
     }
 }

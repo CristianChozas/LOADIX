@@ -2,8 +2,8 @@ package com.loadix.application.usecase;
 
 import java.util.Locale;
 
-import com.loadix.application.dto.auth.AuthUserResponse;
-import com.loadix.application.dto.auth.RegisterRequest;
+import com.loadix.application.dto.request.RegisterRequest;
+import com.loadix.application.dto.response.AuthUserResponse;
 import com.loadix.application.exception.ApplicationConflictException;
 import com.loadix.application.port.out.PasswordHasher;
 import com.loadix.application.port.out.UserAccountRepository;
@@ -16,8 +16,7 @@ public class RegisterUserUseCase {
 
     public RegisterUserUseCase(
             UserAccountRepository userAccountRepository,
-            PasswordHasher passwordHasher
-    ) {
+            PasswordHasher passwordHasher) {
         this.userAccountRepository = userAccountRepository;
         this.passwordHasher = passwordHasher;
     }
@@ -34,15 +33,13 @@ public class RegisterUserUseCase {
                 email,
                 passwordHasher.hash(request.password()),
                 request.role(),
-                false
-        ));
+                false));
 
         return new AuthUserResponse(
                 saved.id(),
                 saved.email(),
                 saved.role(),
-                saved.profileCompleted()
-        );
+                saved.profileCompleted());
     }
 
     private String normalizeEmail(String email) {

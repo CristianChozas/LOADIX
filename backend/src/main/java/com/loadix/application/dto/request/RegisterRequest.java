@@ -1,4 +1,4 @@
-package com.loadix.application.dto.auth;
+package com.loadix.application.dto.request;
 
 import com.loadix.domain.auth.UserRole;
 
@@ -8,8 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
-        @NotBlank @Email String email,
-        @NotBlank @Size(min = 8, max = 72) String password,
-        @NotNull UserRole role
-) {
+                @NotBlank @Email String email,
+                @NotBlank @Size(min = 8, max = 72) String password,
+                @NotNull UserRole role) {
 }

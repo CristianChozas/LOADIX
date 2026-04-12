@@ -1,9 +1,10 @@
 package com.loadix.infrastructure.http;
 
-import com.loadix.application.dto.common.HealthResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.loadix.application.dto.shared.HealthResponse;
 
 @RestController
 @RequestMapping("/api/v1")

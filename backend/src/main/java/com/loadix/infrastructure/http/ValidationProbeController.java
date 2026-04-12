@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.loadix.application.dto.common.ValidationProbeRequest;
-import com.loadix.application.dto.common.ValidationProbeResponse;
+import com.loadix.application.dto.shared.ValidationProbeRequest;
+import com.loadix.application.dto.shared.ValidationProbeResponse;
 
 import jakarta.validation.Valid;
 
@@ -21,7 +21,6 @@ public class ValidationProbeController {
         return new ValidationProbeResponse(
                 "Validation passed",
                 request.name(),
-                request.email()
-        );
+                request.email());
     }
 }

@@ -13,6 +13,10 @@ spring:
   flyway:
     enabled: true
 
+loadix:
+  security:
+    cookie-secure: true
+
 logging:
   level:
     root: INFO

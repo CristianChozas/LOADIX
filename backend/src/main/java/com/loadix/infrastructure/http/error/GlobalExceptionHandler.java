@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.loadix.application.exception.ApplicationAuthenticationException;
 import com.loadix.application.exception.ApplicationConflictException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,6 +48,14 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return build(HttpStatus.CONFLICT, "CONFLICT", exception.getMessage(), request, List.of());
+    }
+
+    @ExceptionHandler(ApplicationAuthenticationException.class)
+    public ResponseEntity<ApiErrorResponse> handleAuthentication(
+            ApplicationAuthenticationException exception,
+            HttpServletRequest request
+    ) {
+        return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", exception.getMessage(), request, List.of());
     }
 
     @ExceptionHandler(ResponseStatusException.class)

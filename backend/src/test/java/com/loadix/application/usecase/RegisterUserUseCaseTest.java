@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.loadix.application.dto.auth.RegisterRequest;
+import com.loadix.application.dto.request.RegisterRequest;
 import com.loadix.application.exception.ApplicationConflictException;
 import com.loadix.application.port.out.PasswordHasher;
 import com.loadix.application.port.out.UserAccountRepository;
@@ -62,7 +61,8 @@ class RegisterUserUseCaseTest {
     void rejectsDuplicateEmail() {
         when(userAccountRepository.existsByEmail("duplicate@loadix.test")).thenReturn(true);
 
-        assertThatThrownBy(() -> useCase.register(new RegisterRequest("duplicate@loadix.test", "Password1", UserRole.CARRIER)))
+        assertThatThrownBy(
+                () -> useCase.register(new RegisterRequest("duplicate@loadix.test", "Password1", UserRole.CARRIER)))
                 .isInstanceOf(ApplicationConflictException.class);
     }
 }
