@@ -1,6 +1,6 @@
 package com.loadix.application.dto.request;
 
-import com.loadix.domain.auth.UserRole;
+import com.loadix.domain.valueobject.UserRole;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

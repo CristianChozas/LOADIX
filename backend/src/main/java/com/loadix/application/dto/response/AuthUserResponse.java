@@ -3,7 +3,7 @@ package com.loadix.application.dto.response;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.loadix.domain.auth.UserRole;
+import com.loadix.domain.valueobject.UserRole;
 
 public record AuthUserResponse(
                 UUID id,

@@ -1,7 +1,7 @@
 package com.loadix.infrastructure.persistence.entity;
 
-import com.loadix.domain.auth.UserAccount;
-import com.loadix.domain.auth.UserRole;
+import com.loadix.domain.model.UserAccount;
+import com.loadix.domain.valueobject.UserRole;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

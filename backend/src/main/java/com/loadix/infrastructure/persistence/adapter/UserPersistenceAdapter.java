@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 import com.loadix.application.port.out.UserAccountRepository;
-import com.loadix.domain.auth.UserAccount;
+import com.loadix.domain.model.UserAccount;
 import com.loadix.infrastructure.persistence.entity.UserJpaEntity;
 import com.loadix.infrastructure.persistence.repository.UserJpaRepository;
 
