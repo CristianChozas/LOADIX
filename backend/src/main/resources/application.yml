@@ -3,6 +3,10 @@ spring:
     name: loadix-backend-api
   profiles:
     default: dev
+  jpa:
+    properties:
+      hibernate:
+        default_schema: loadix
 
 server:
   port: ${SERVER_PORT:8082}

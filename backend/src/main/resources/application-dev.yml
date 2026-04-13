@@ -2,20 +2,24 @@ spring:
   config:
     activate:
       on-profile: dev
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5434}/${POSTGRES_DB:loadix}
-    username: ${POSTGRES_USER:loadix}
-    password: ${POSTGRES_PASSWORD:loadix}
+    import: optional:file:.env[.properties]
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      url: ${SPRING_DATA_REDIS_URL:${REDIS_URL:redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}}}
+      ssl:
+        enabled: ${REDIS_SSL:false}
   flyway:
     enabled: true
+    default-schema: loadix
+    schemas: loadix
+    create-schemas: true
 
 loadix:
   security:
     cookie-secure: false
+  rate-limit:
+    auth-capacity: 60
+    auth-window: PT1M
 
 logging:
   level:
