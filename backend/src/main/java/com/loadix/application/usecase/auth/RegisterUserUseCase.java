@@ -22,7 +22,8 @@ public class RegisterUserUseCase implements RegisterUserInputPort {
             UserAccountRepository userAccountRepository,
             PasswordHasher passwordHasher,
             AuthMapper authMapper) {
-        this.userAccountRepository = Objects.requireNonNull(userAccountRepository, "userAccountRepository cannot be null");
+        this.userAccountRepository = Objects.requireNonNull(userAccountRepository,
+                "userAccountRepository cannot be null");
         this.passwordHasher = Objects.requireNonNull(passwordHasher, "passwordHasher cannot be null");
         this.authMapper = Objects.requireNonNull(authMapper, "authMapper cannot be null");
     }

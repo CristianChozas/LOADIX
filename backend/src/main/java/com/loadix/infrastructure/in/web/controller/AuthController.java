@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,11 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.loadix.application.dto.request.LoginRequest;
 import com.loadix.application.dto.request.RegisterRequest;
+import com.loadix.application.dto.request.UpdateEmailRequest;
 import com.loadix.application.dto.response.AuthSessionResponse;
 import com.loadix.application.dto.response.AuthUserResponse;
 import com.loadix.application.port.in.GetCurrentUserInputPort;
 import com.loadix.application.port.in.LoginUserInputPort;
 import com.loadix.application.port.in.RegisterUserInputPort;
+import com.loadix.application.port.in.UpdateCurrentUserEmailInputPort;
 import com.loadix.domain.exception.InvalidCredentialsException;
 import com.loadix.infrastructure.in.web.response.ApiSuccessResponse;
 import com.loadix.infrastructure.security.AuthCookieService;
@@ -32,17 +35,20 @@ public class AuthController {
     private final LoginUserInputPort loginUserInputPort;
     private final GetCurrentUserInputPort getCurrentUserInputPort;
     private final RegisterUserInputPort registerUserInputPort;
+    private final UpdateCurrentUserEmailInputPort updateCurrentUserEmailInputPort;
     private final AuthCookieService authCookieService;
 
     public AuthController(
             LoginUserInputPort loginUserInputPort,
             GetCurrentUserInputPort getCurrentUserInputPort,
             RegisterUserInputPort registerUserInputPort,
+            UpdateCurrentUserEmailInputPort updateCurrentUserEmailInputPort,
             AuthCookieService authCookieService
     ) {
         this.loginUserInputPort = loginUserInputPort;
         this.getCurrentUserInputPort = getCurrentUserInputPort;
         this.registerUserInputPort = registerUserInputPort;
+        this.updateCurrentUserEmailInputPort = updateCurrentUserEmailInputPort;
         this.authCookieService = authCookieService;
     }
 
@@ -69,6 +75,21 @@ public class AuthController {
             throw new InvalidCredentialsException();
         }
         return new ApiSuccessResponse<>(true, getCurrentUserInputPort.execute(authentication.getName()));
+    }
+
+    @PatchMapping("/email")
+    public ApiSuccessResponse<AuthUserResponse> updateEmail(
+            Authentication authentication,
+            @Valid @RequestBody UpdateEmailRequest request,
+            HttpServletResponse response
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        AuthSessionResponse session = updateCurrentUserEmailInputPort.execute(authentication.getName(), request);
+        authCookieService.setAuthCookie(response, session.token());
+        return new ApiSuccessResponse<>(true, session.user());
     }
 
     @PostMapping("/logout")

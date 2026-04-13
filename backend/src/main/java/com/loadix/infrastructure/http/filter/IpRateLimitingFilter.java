@@ -6,11 +6,11 @@ import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.loadix.infrastructure.config.RateLimitProperties;
-import com.loadix.infrastructure.http.error.RateLimitExceededException;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -51,7 +51,8 @@ public class IpRateLimitingFilter extends OncePerRequestFilter {
         );
 
         if (!bucket.tryConsume()) {
-            throw new RateLimitExceededException("Too many requests for this endpoint");
+            response.sendError(HttpStatus.TOO_MANY_REQUESTS.value(), "Too many requests for this endpoint");
+            return;
         }
 
         filterChain.doFilter(request, response);

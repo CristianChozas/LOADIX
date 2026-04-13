@@ -1,5 +1,6 @@
 package com.loadix.infrastructure.persistence.adapter;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
@@ -32,5 +33,25 @@ public class UserPersistenceAdapter implements UserAccountRepository {
     public UserAccount save(UserAccount account) {
         UserJpaEntity persisted = userJpaRepository.save(UserJpaEntity.fromDomain(account));
         return persisted.toDomain();
+    }
+
+    @Override
+    public UserAccount updateEmail(String currentEmail, String newEmail) {
+        UserJpaEntity existing = userJpaRepository.findByEmailIgnoreCase(normalizeEmail(currentEmail))
+                .orElseThrow();
+
+        UserAccount updated = new UserAccount(
+                existing.getId(),
+                normalizeEmail(newEmail),
+                existing.getPasswordHash(),
+                existing.getRole(),
+                existing.isProfileCompleted()
+        );
+
+        return userJpaRepository.save(UserJpaEntity.fromDomain(updated)).toDomain();
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 }

@@ -33,6 +33,10 @@ public abstract class BaseJpaEntity {
         return id;
     }
 
+    protected void setId(UUID id) {
+        this.id = id;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }

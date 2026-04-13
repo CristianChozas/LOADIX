@@ -1,16 +1,16 @@
 package com.loadix.infrastructure.http.filter;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import com.loadix.infrastructure.config.RateLimitProperties;
-import com.loadix.infrastructure.http.error.RateLimitExceededException;
 
 class IpRateLimitingFilterTest {
 
@@ -25,8 +25,10 @@ class IpRateLimitingFilterTest {
 
         MockHttpServletRequest secondRequest = new MockHttpServletRequest("GET", "/api/v1/health");
         secondRequest.setRemoteAddr("127.0.0.1");
+        MockHttpServletResponse secondResponse = new MockHttpServletResponse();
 
-        assertThatThrownBy(() -> filter.doFilter(secondRequest, new MockHttpServletResponse(), new MockFilterChain()))
-                .isInstanceOf(RateLimitExceededException.class);
+        filter.doFilter(secondRequest, secondResponse, new MockFilterChain());
+
+        assertThat(secondResponse.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.value());
     }
 }

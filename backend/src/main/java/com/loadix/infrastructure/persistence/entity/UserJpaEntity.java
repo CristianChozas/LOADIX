@@ -37,7 +37,11 @@ public class UserJpaEntity extends BaseJpaEntity {
     }
 
     public static UserJpaEntity fromDomain(UserAccount account) {
-        return new UserJpaEntity(account.email(), account.passwordHash(), account.role(), account.profileCompleted());
+        UserJpaEntity entity = new UserJpaEntity(account.email(), account.passwordHash(), account.role(), account.profileCompleted());
+        if (account.id() != null) {
+            entity.setId(account.id());
+        }
+        return entity;
     }
 
     public UserAccount toDomain() {
