@@ -1,5 +1,8 @@
 package com.loadix.infrastructure.persistence.adapter;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.stereotype.Component;
 
 import com.loadix.application.port.out.CarrierProfilePort;
@@ -23,5 +26,11 @@ public class CarrierProfilePersistenceAdapter implements CarrierProfilePort {
                 .ifPresent(existing -> entity.reusePersistentId(existing.getId()));
         CarrierProfileJpaEntity persisted = carrierProfileJpaRepository.save(entity);
         return persisted.toDomain();
+    }
+
+    @Override
+    public Optional<CarrierProfile> findByUserId(UUID userId) {
+        return carrierProfileJpaRepository.findByUserId(userId)
+                .map(CarrierProfileJpaEntity::toDomain);
     }
 }

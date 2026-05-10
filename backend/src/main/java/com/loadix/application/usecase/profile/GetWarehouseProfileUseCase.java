@@ -6,6 +6,7 @@ import com.loadix.application.dto.response.WarehouseProfileResponse;
 import com.loadix.application.port.in.GetWarehouseProfilePort;
 import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.application.port.out.WarehouseProfilePort;
+import com.loadix.domain.exception.ProfileNotFoundException;
 import com.loadix.domain.exception.UserNotFoundException;
 import com.loadix.domain.model.UserAccount;
 
@@ -37,7 +38,7 @@ public class GetWarehouseProfileUseCase implements GetWarehouseProfilePort {
                 profile.cargoType(),
                 profile.isCompleted()
             ))
-            .orElseThrow(UserNotFoundException::new);
+            .orElseThrow(ProfileNotFoundException::new);
 
     }
 

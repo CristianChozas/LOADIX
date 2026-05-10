@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.loadix.application.port.in.CreateCarrierProfilePort;
 import com.loadix.application.port.in.CreateWarehouseProfilePort;
+import com.loadix.application.port.in.GetCarrierProfilePort;
 import com.loadix.application.port.in.GetWarehouseProfilePort;
 import com.loadix.application.port.in.UpdateWarehouseProfilePort;
 import com.loadix.application.port.out.CarrierProfilePort;
@@ -12,6 +13,7 @@ import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.application.port.out.WarehouseProfilePort;
 import com.loadix.application.usecase.profile.CreateCarrierProfileUseCase;
 import com.loadix.application.usecase.profile.CreateWarehouseProfileUseCase;
+import com.loadix.application.usecase.profile.GetCarrierProfileUseCase;
 import com.loadix.application.usecase.profile.GetWarehouseProfileUseCase;
 import com.loadix.application.usecase.profile.UpdateWarehouseProfileUseCase;
 
@@ -47,5 +49,13 @@ public class ProfileConfig {
         CarrierProfilePort carrierProfilePort
     ){
         return new CreateCarrierProfileUseCase(userAccountPort, carrierProfilePort);
+    }
+
+    @Bean
+    public GetCarrierProfilePort getCarrierProfilePort(
+        UserAccountPort userAccountPort,
+        CarrierProfilePort carrierProfilePort
+    ) {
+        return new GetCarrierProfileUseCase(userAccountPort, carrierProfilePort);
     }
 }

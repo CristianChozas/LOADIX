@@ -154,6 +154,41 @@ class ProfileControllerTest extends IntegrationTestContainers {
         }
 
         @Test
+        void returnsCarrierProfileForAuthenticatedUser() throws Exception {
+                Cookie authCookie = registerAndLoginCarrierUser("carrier-get-profile@loadix.test");
+
+                mockMvc.perform(post("/api/v1/profiles/carrier")
+                                .cookie(authCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{" +
+                                                "\"name\":\"Laura\"," +
+                                                "\"lastName\":\"Martin\"," +
+                                                "\"phone\":\"612345678\"," +
+                                                "\"vehicleType\":\"TRAILER\"," +
+                                                "\"licensePlate\":\"7777XYZ\"," +
+                                                "\"carnet\":\"C+E\"}"))
+                                .andExpect(status().isOk());
+
+                mockMvc.perform(get("/api/v1/profiles/carrier")
+                                .cookie(authCookie))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.name").value("Laura"))
+                                .andExpect(jsonPath("$.lastName").value("Martin"))
+                                .andExpect(jsonPath("$.vehicleType").value("TRAILER"))
+                                .andExpect(jsonPath("$.licensePlate").value("7777XYZ"))
+                                .andExpect(jsonPath("$.completed").value(true));
+        }
+
+        @Test
+        void returnsNotFoundWhenCarrierProfileDoesNotExist() throws Exception {
+                Cookie authCookie = registerAndLoginCarrierUser("carrier-without-profile@loadix.test");
+
+                mockMvc.perform(get("/api/v1/profiles/carrier")
+                                .cookie(authCookie))
+                                .andExpect(status().isNotFound());
+        }
+
+        @Test
         void rejectsWarehouseProfileWithoutAuthentication() throws Exception {
                 mockMvc.perform(get("/api/v1/profiles/warehouse"))
                                 .andExpect(status().isUnauthorized());

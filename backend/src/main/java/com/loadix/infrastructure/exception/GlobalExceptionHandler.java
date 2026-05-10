@@ -15,6 +15,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.server.ResponseStatusException;
 
 import com.loadix.domain.exception.InvalidCredentialsException;
+import com.loadix.domain.exception.ProfileNotFoundException;
 import com.loadix.domain.exception.UserAlreadyExistsException;
 import com.loadix.domain.exception.UserNotFoundException;
 import com.loadix.infrastructure.http.error.RateLimitExceededException;
@@ -71,6 +72,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleUserNotFound(
             UserNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        logHandledException(HttpStatus.NOT_FOUND, request, exception);
+        return build(HttpStatus.NOT_FOUND, "NOT_FOUND", exception.getMessage(), request, List.of());
+    }
+
+    @ExceptionHandler(ProfileNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleProfileNotFound(
+            ProfileNotFoundException exception,
             HttpServletRequest request
     ) {
         logHandledException(HttpStatus.NOT_FOUND, request, exception);

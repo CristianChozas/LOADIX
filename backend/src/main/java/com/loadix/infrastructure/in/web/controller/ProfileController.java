@@ -16,6 +16,7 @@ import com.loadix.application.dto.response.CarrierProfileResponse;
 import com.loadix.application.dto.response.WarehouseProfileResponse;
 import com.loadix.application.port.in.CreateCarrierProfilePort;
 import com.loadix.application.port.in.CreateWarehouseProfilePort;
+import com.loadix.application.port.in.GetCarrierProfilePort;
 import com.loadix.application.port.in.GetWarehouseProfilePort;
 import com.loadix.application.port.in.UpdateWarehouseProfilePort;
 import com.loadix.domain.exception.InvalidCredentialsException;
@@ -38,16 +39,19 @@ public class ProfileController {
     private final GetWarehouseProfilePort getWarehouseProfilePort;
     private final UpdateWarehouseProfilePort updateWarehouseProfilePort;
     private final CreateCarrierProfilePort createCarrierProfilePort;
+    private final GetCarrierProfilePort getCarrierProfilePort;
 
     public ProfileController(
         CreateWarehouseProfilePort createWarehouseProfilePort,
         GetWarehouseProfilePort getWarehouseProfilePort,
         UpdateWarehouseProfilePort updateWarehouseProfilePort,
-        CreateCarrierProfilePort createCarrierProfilePort) {
+        CreateCarrierProfilePort createCarrierProfilePort,
+        GetCarrierProfilePort getCarrierProfilePort) {
             this.createWarehouseProfilePort = createWarehouseProfilePort;
             this.getWarehouseProfilePort = getWarehouseProfilePort;
             this.updateWarehouseProfilePort = updateWarehouseProfilePort;
             this.createCarrierProfilePort = createCarrierProfilePort;
+            this.getCarrierProfilePort = getCarrierProfilePort;
     }
 
     @PostMapping("/warehouse")
@@ -71,6 +75,7 @@ public class ProfileController {
     @Operation(summary = "Get the authenticated warehouse profile")
     @ApiResponse(responseCode = "200", description = "Warehouse profile returned",
             content = @Content(schema = @Schema(implementation = WarehouseProfileResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Profile not found")
     @ApiResponse(responseCode = "401", description = "Unauthenticated")
     public WarehouseProfileResponse getWarehouseProfile(
         @Parameter(hidden = true) Authentication authentication
@@ -114,5 +119,21 @@ public class ProfileController {
         }
 
         return createCarrierProfilePort.execute(authentication.getName(), request);
+    }
+
+    @GetMapping("/carrier")
+    @Operation(summary = "Get the authenticated carrier profile")
+    @ApiResponse(responseCode = "200", description = "Carrier profile returned",
+            content = @Content(schema = @Schema(implementation = CarrierProfileResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Profile not found")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    public CarrierProfileResponse getCarrierProfile(
+        @Parameter(hidden = true) Authentication authentication
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        return getCarrierProfilePort.execute(authentication.getName());
     }
 }
