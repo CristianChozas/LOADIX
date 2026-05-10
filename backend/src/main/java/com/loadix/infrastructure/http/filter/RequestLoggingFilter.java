@@ -30,7 +30,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         } finally {
             long durationMs = System.currentTimeMillis() - startedAt;
             LOGGER.info(
-                    "http_request method={} path={} status={} duration_ms={}",
+                    "HTTP {} {} {} {}ms",
                     request.getMethod(),
                     request.getRequestURI(),
                     response.getStatus(),

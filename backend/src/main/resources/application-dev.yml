@@ -3,6 +3,9 @@ spring:
     activate:
       on-profile: dev
     import: optional:file:.env[.properties]
+  output:
+    ansi:
+      enabled: always
   data:
     redis:
       url: ${SPRING_DATA_REDIS_URL:${REDIS_URL:redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}}}

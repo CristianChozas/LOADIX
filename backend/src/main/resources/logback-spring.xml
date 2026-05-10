@@ -2,9 +2,13 @@
 <configuration>
     <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="loadix-backend-api"/>
 
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="prettyMsg" converterClass="com.loadix.infrastructure.logging.PrettyMessageConverter"/>
+
     <appender name="CONSOLE_DEV" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level app=${appName} logger=%logger{36} msg=%msg%n</pattern>
+            <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5level) %clr([%thread]){faint} %clr(%logger{36}){cyan} %clr([%class.%method:%line]){yellow} %clr(:){faint} %prettyMsg%n%wex</pattern>
         </encoder>
     </appender>
 

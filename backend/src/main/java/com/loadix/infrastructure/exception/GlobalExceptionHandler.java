@@ -3,6 +3,8 @@ package com.loadix.infrastructure.exception;
 import java.time.Instant;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -22,11 +24,14 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(
             MethodArgumentNotValidException exception,
             HttpServletRequest request
     ) {
+        logHandledException(HttpStatus.BAD_REQUEST, request, exception);
         List<ApiErrorResponse.FieldViolation> violations = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -41,6 +46,7 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException exception,
             HttpServletRequest request
     ) {
+        logHandledException(HttpStatus.BAD_REQUEST, request, exception);
         return build(HttpStatus.BAD_REQUEST, "TYPE_MISMATCH", exception.getMessage(), request, List.of());
     }
 
@@ -49,6 +55,7 @@ public class GlobalExceptionHandler {
             UserAlreadyExistsException exception,
             HttpServletRequest request
     ) {
+        logHandledException(HttpStatus.CONFLICT, request, exception);
         return build(HttpStatus.CONFLICT, "CONFLICT", exception.getMessage(), request, List.of());
     }
 
@@ -57,6 +64,7 @@ public class GlobalExceptionHandler {
             InvalidCredentialsException exception,
             HttpServletRequest request
     ) {
+        logHandledException(HttpStatus.UNAUTHORIZED, request, exception);
         return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", exception.getMessage(), request, List.of());
     }
 
@@ -65,6 +73,7 @@ public class GlobalExceptionHandler {
             UserNotFoundException exception,
             HttpServletRequest request
     ) {
+        logHandledException(HttpStatus.NOT_FOUND, request, exception);
         return build(HttpStatus.NOT_FOUND, "NOT_FOUND", exception.getMessage(), request, List.of());
     }
 
@@ -73,6 +82,7 @@ public class GlobalExceptionHandler {
             RateLimitExceededException exception,
             HttpServletRequest request
     ) {
+        logHandledException(HttpStatus.TOO_MANY_REQUESTS, request, exception);
         return build(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMIT_EXCEEDED", exception.getMessage(), request, List.of());
     }
 
@@ -82,6 +92,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         HttpStatus status = HttpStatus.valueOf(exception.getStatusCode().value());
+        logHandledException(status, request, exception);
         return build(status, status.name(), exception.getReason(), request, List.of());
     }
 
@@ -90,7 +101,26 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
     ) {
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Unexpected server error", request, List.of());
+        LOGGER.error(
+                "unhandled_exception method={} path={} type={} message={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                exception.getClass().getSimpleName(),
+                exception.getMessage(),
+                exception
+        );
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", exception.getMessage(), request, List.of());
+    }
+
+    private void logHandledException(HttpStatus status, HttpServletRequest request, Exception exception) {
+        LOGGER.warn(
+                "handled_exception status={} method={} path={} type={} message={}",
+                status.value(),
+                request.getMethod(),
+                request.getRequestURI(),
+                exception.getClass().getSimpleName(),
+                exception.getMessage()
+        );
     }
 
     private ApiErrorResponse.FieldViolation mapFieldError(FieldError fieldError) {
