@@ -137,6 +137,23 @@ class ProfileControllerTest extends IntegrationTestContainers {
         }
 
         @Test
+        void rejectsInvalidCarrierProfilePayload() throws Exception {
+                Cookie authCookie = registerAndLoginCarrierUser("carrier-invalid@loadix.test");
+
+                mockMvc.perform(post("/api/v1/profiles/carrier")
+                                .cookie(authCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{" +
+                                                "\"name\":\"\"," +
+                                                "\"lastName\":\"Gomez\"," +
+                                                "\"phone\":\"612345678\"," +
+                                                "\"vehicleType\":\"FURGONETA\"," +
+                                                "\"licensePlate\":\"1234ABC\"," +
+                                                "\"carnet\":\"C1\"}"))
+                                .andExpect(status().isBadRequest());
+        }
+
+        @Test
         void rejectsWarehouseProfileWithoutAuthentication() throws Exception {
                 mockMvc.perform(get("/api/v1/profiles/warehouse"))
                                 .andExpect(status().isUnauthorized());
