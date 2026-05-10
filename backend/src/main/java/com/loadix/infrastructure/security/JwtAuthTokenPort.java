@@ -4,14 +4,14 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.loadix.application.port.out.AuthTokenService;
+import com.loadix.application.port.out.AuthTokenPort;
 
 @Component
-public class JwtAuthTokenService implements AuthTokenService {
+public class JwtAuthTokenPort implements AuthTokenPort {
 
     private final JwtTokenService jwtTokenService;
 
-    public JwtAuthTokenService(JwtTokenService jwtTokenService) {
+    public JwtAuthTokenPort(JwtTokenService jwtTokenService) {
         this.jwtTokenService = jwtTokenService;
     }
 

@@ -30,6 +30,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+        return "/api/v1/auth/register".equals(path)
+                || "/api/v1/auth/login".equals(path)
+                || "/api/v1/auth/logout".equals(path)
+                || "/api/v1/health".equals(path)
+                || path.startsWith("/swagger-ui/")
+                || "/v3/api-docs".equals(path)
+                || path.startsWith("/v3/api-docs/");
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -54,6 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
+            SecurityContextHolder.clearContext();
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
         }
     }

@@ -17,9 +17,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.loadix.application.dto.request.LoginRequest;
 import com.loadix.application.mapper.AuthMapper;
 import com.loadix.domain.exception.InvalidCredentialsException;
-import com.loadix.application.port.out.AuthTokenService;
-import com.loadix.application.port.out.PasswordHasher;
-import com.loadix.application.port.out.UserAccountRepository;
+import com.loadix.application.port.out.AuthTokenPort;
+import com.loadix.application.port.out.PasswordHasherPort;
+import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.domain.model.UserAccount;
 import com.loadix.domain.valueobject.UserRole;
 
@@ -27,27 +27,27 @@ import com.loadix.domain.valueobject.UserRole;
 class LoginUserUseCaseTest {
 
     @Mock
-    private UserAccountRepository userAccountRepository;
+    private UserAccountPort userAccountPort;
 
     @Mock
-    private PasswordHasher passwordHasher;
+    private PasswordHasherPort passwordHasherPort;
 
     @Mock
-    private AuthTokenService authTokenService;
+    private AuthTokenPort authTokenPort;
 
     private LoginUserUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new LoginUserUseCase(userAccountRepository, passwordHasher, authTokenService, new AuthMapper());
+        useCase = new LoginUserUseCase(userAccountPort, passwordHasherPort, authTokenPort, new AuthMapper());
     }
 
     @Test
     void logsInAndReturnsSession() {
         UserAccount account = new UserAccount(UUID.randomUUID(), "login@loadix.test", "hashed-password", UserRole.WAREHOUSE, false);
-        when(userAccountRepository.findByEmail("login@loadix.test")).thenReturn(Optional.of(account));
-        when(passwordHasher.matches("Password1", "hashed-password")).thenReturn(true);
-        when(authTokenService.createToken("login@loadix.test", List.of("WAREHOUSE"))).thenReturn("jwt-token");
+        when(userAccountPort.findByEmail("login@loadix.test")).thenReturn(Optional.of(account));
+        when(passwordHasherPort.matches("Password1", "hashed-password")).thenReturn(true);
+        when(authTokenPort.createToken("login@loadix.test", List.of("WAREHOUSE"))).thenReturn("jwt-token");
 
         var session = useCase.execute(new LoginRequest(" LOGIN@LOADIX.TEST ", "Password1"));
 
@@ -57,7 +57,7 @@ class LoginUserUseCaseTest {
 
     @Test
     void rejectsInvalidCredentials() {
-        when(userAccountRepository.findByEmail("missing@loadix.test")).thenReturn(Optional.empty());
+        when(userAccountPort.findByEmail("missing@loadix.test")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> useCase.execute(new LoginRequest("missing@loadix.test", "Password1")))
                 .isInstanceOf(InvalidCredentialsException.class);

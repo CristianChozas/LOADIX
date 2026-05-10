@@ -4,17 +4,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.loadix.application.mapper.AuthMapper;
-import com.loadix.application.port.in.GetCurrentUserInputPort;
-import com.loadix.application.port.in.LoginUserInputPort;
-import com.loadix.application.port.in.RegisterUserInputPort;
-import com.loadix.application.port.in.UpdateCurrentUserEmailInputPort;
-import com.loadix.application.port.out.AuthTokenService;
-import com.loadix.application.port.out.PasswordHasher;
-import com.loadix.application.port.out.UserAccountRepository;
+import com.loadix.application.port.in.GetCurrentUserPort;
+import com.loadix.application.port.in.LoginUserPort;
+import com.loadix.application.port.in.RegisterUserPort;
+import com.loadix.application.port.in.UpdateCurrentUserEmailPort;
+import com.loadix.application.port.out.AuthTokenPort;
+import com.loadix.application.port.out.PasswordHasherPort;
+import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.application.usecase.auth.GetCurrentUserUseCase;
 import com.loadix.application.usecase.auth.LoginUserUseCase;
 import com.loadix.application.usecase.auth.RegisterUserUseCase;
 import com.loadix.application.usecase.auth.UpdateCurrentUserEmailUseCase;
+
 
 @Configuration
 public class AuthConfig {
@@ -25,38 +26,39 @@ public class AuthConfig {
     }
 
     @Bean
-    public RegisterUserInputPort registerUserInputPort(
-            UserAccountRepository userAccountRepository,
-            PasswordHasher passwordHasher,
+    public RegisterUserPort registerUserPort(
+            UserAccountPort userAccountPort,
+            PasswordHasherPort passwordHasherPort,
             AuthMapper authMapper
     ) {
-        return new RegisterUserUseCase(userAccountRepository, passwordHasher, authMapper);
+        return new RegisterUserUseCase(userAccountPort, passwordHasherPort, authMapper);
     }
 
     @Bean
-    public LoginUserInputPort loginUserInputPort(
-            UserAccountRepository userAccountRepository,
-            PasswordHasher passwordHasher,
-            AuthTokenService authTokenService,
+    public LoginUserPort loginUserPort(
+            UserAccountPort userAccountPort,
+            PasswordHasherPort passwordHasherPort,
+            AuthTokenPort authTokenPort,
             AuthMapper authMapper
     ) {
-        return new LoginUserUseCase(userAccountRepository, passwordHasher, authTokenService, authMapper);
+        return new LoginUserUseCase(userAccountPort, passwordHasherPort, authTokenPort, authMapper);
     }
 
     @Bean
-    public GetCurrentUserInputPort getCurrentUserInputPort(
-            UserAccountRepository userAccountRepository,
+    public GetCurrentUserPort getCurrentUserPort(
+            UserAccountPort userAccountPort,
             AuthMapper authMapper
     ) {
-        return new GetCurrentUserUseCase(userAccountRepository, authMapper);
+        return new GetCurrentUserUseCase(userAccountPort, authMapper);
     }
 
     @Bean
-    public UpdateCurrentUserEmailInputPort updateCurrentUserEmailInputPort(
-            UserAccountRepository userAccountRepository,
-            AuthTokenService authTokenService,
+    public UpdateCurrentUserEmailPort updateCurrentUserEmailPort(
+            UserAccountPort userAccountPort,
+            AuthTokenPort authTokenPort,
             AuthMapper authMapper
     ) {
-        return new UpdateCurrentUserEmailUseCase(userAccountRepository, authTokenService, authMapper);
+        return new UpdateCurrentUserEmailUseCase(userAccountPort, authTokenPort, authMapper);
     }
+
 }

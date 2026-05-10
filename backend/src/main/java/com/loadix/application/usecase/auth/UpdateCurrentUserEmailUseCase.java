@@ -7,25 +7,25 @@ import java.util.Objects;
 import com.loadix.application.dto.request.UpdateEmailRequest;
 import com.loadix.application.dto.response.AuthSessionResponse;
 import com.loadix.application.mapper.AuthMapper;
-import com.loadix.application.port.in.UpdateCurrentUserEmailInputPort;
-import com.loadix.application.port.out.AuthTokenService;
-import com.loadix.application.port.out.UserAccountRepository;
+import com.loadix.application.port.in.UpdateCurrentUserEmailPort;
+import com.loadix.application.port.out.AuthTokenPort;
+import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.domain.exception.UserAlreadyExistsException;
 import com.loadix.domain.model.UserAccount;
 
-public class UpdateCurrentUserEmailUseCase implements UpdateCurrentUserEmailInputPort {
+public class UpdateCurrentUserEmailUseCase implements UpdateCurrentUserEmailPort {
 
-    private final UserAccountRepository userAccountRepository;
-    private final AuthTokenService authTokenService;
+    private final UserAccountPort userAccountPort;
+    private final AuthTokenPort authTokenPort;
     private final AuthMapper authMapper;
 
     public UpdateCurrentUserEmailUseCase(
-            UserAccountRepository userAccountRepository,
-            AuthTokenService authTokenService,
+            UserAccountPort userAccountPort,
+            AuthTokenPort authTokenPort,
             AuthMapper authMapper
     ) {
-        this.userAccountRepository = Objects.requireNonNull(userAccountRepository, "userAccountRepository cannot be null");
-        this.authTokenService = Objects.requireNonNull(authTokenService, "authTokenService cannot be null");
+        this.userAccountPort = Objects.requireNonNull(userAccountPort, "userAccountPort cannot be null");
+        this.authTokenPort = Objects.requireNonNull(authTokenPort, "authTokenPort cannot be null");
         this.authMapper = Objects.requireNonNull(authMapper, "authMapper cannot be null");
     }
 
@@ -34,12 +34,12 @@ public class UpdateCurrentUserEmailUseCase implements UpdateCurrentUserEmailInpu
         String normalizedCurrentEmail = normalizeEmail(currentEmail);
         String normalizedNewEmail = normalizeEmail(Objects.requireNonNull(request, "request cannot be null").email());
 
-        if (!normalizedCurrentEmail.equals(normalizedNewEmail) && userAccountRepository.existsByEmail(normalizedNewEmail)) {
+        if (!normalizedCurrentEmail.equals(normalizedNewEmail) && userAccountPort.existsByEmail(normalizedNewEmail)) {
             throw new UserAlreadyExistsException();
         }
 
-        UserAccount updatedUser = userAccountRepository.updateEmail(normalizedCurrentEmail, normalizedNewEmail);
-        String token = authTokenService.createToken(updatedUser.email(), List.of(updatedUser.role().name()));
+        UserAccount updatedUser = userAccountPort.updateEmail(normalizedCurrentEmail, normalizedNewEmail);
+        String token = authTokenPort.createToken(updatedUser.email(), List.of(updatedUser.role().name()));
 
         return new AuthSessionResponse(authMapper.toAuthUserResponse(updatedUser), token);
     }

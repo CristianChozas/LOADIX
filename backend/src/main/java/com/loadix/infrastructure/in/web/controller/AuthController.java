@@ -16,85 +16,111 @@ import com.loadix.application.dto.request.RegisterRequest;
 import com.loadix.application.dto.request.UpdateEmailRequest;
 import com.loadix.application.dto.response.AuthSessionResponse;
 import com.loadix.application.dto.response.AuthUserResponse;
-import com.loadix.application.port.in.GetCurrentUserInputPort;
-import com.loadix.application.port.in.LoginUserInputPort;
-import com.loadix.application.port.in.RegisterUserInputPort;
-import com.loadix.application.port.in.UpdateCurrentUserEmailInputPort;
+import com.loadix.application.port.in.GetCurrentUserPort;
+import com.loadix.application.port.in.LoginUserPort;
+import com.loadix.application.port.in.RegisterUserPort;
+import com.loadix.application.port.in.UpdateCurrentUserEmailPort;
 import com.loadix.domain.exception.InvalidCredentialsException;
-import com.loadix.infrastructure.in.web.response.ApiSuccessResponse;
 import com.loadix.infrastructure.security.AuthCookieService;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Validated
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Auth", description = "Authentication and current user operations")
 public class AuthController {
 
-    private final LoginUserInputPort loginUserInputPort;
-    private final GetCurrentUserInputPort getCurrentUserInputPort;
-    private final RegisterUserInputPort registerUserInputPort;
-    private final UpdateCurrentUserEmailInputPort updateCurrentUserEmailInputPort;
+    private final LoginUserPort loginUserPort;
+    private final GetCurrentUserPort getCurrentUserPort;
+    private final RegisterUserPort registerUserPort;
+    private final UpdateCurrentUserEmailPort updateCurrentUserEmailPort;
     private final AuthCookieService authCookieService;
 
     public AuthController(
-            LoginUserInputPort loginUserInputPort,
-            GetCurrentUserInputPort getCurrentUserInputPort,
-            RegisterUserInputPort registerUserInputPort,
-            UpdateCurrentUserEmailInputPort updateCurrentUserEmailInputPort,
+            LoginUserPort loginUserPort,
+            GetCurrentUserPort getCurrentUserPort,
+            RegisterUserPort registerUserPort,
+            UpdateCurrentUserEmailPort updateCurrentUserEmailPort,
             AuthCookieService authCookieService
     ) {
-        this.loginUserInputPort = loginUserInputPort;
-        this.getCurrentUserInputPort = getCurrentUserInputPort;
-        this.registerUserInputPort = registerUserInputPort;
-        this.updateCurrentUserEmailInputPort = updateCurrentUserEmailInputPort;
+        this.loginUserPort = loginUserPort;
+        this.getCurrentUserPort = getCurrentUserPort;
+        this.registerUserPort = registerUserPort;
+        this.updateCurrentUserEmailPort = updateCurrentUserEmailPort;
         this.authCookieService = authCookieService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiSuccessResponse<AuthUserResponse>> register(
+    @Operation(summary = "Register a new user")
+    @ApiResponse(responseCode = "201", description = "User registered",
+            content = @Content(schema = @Schema(implementation = AuthUserResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid registration payload")
+    public ResponseEntity<AuthUserResponse> register(
             @Valid @RequestBody RegisterRequest request) {
-        AuthUserResponse user = registerUserInputPort.execute(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiSuccessResponse<>(true, user));
+        AuthUserResponse user = registerUserPort.execute(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiSuccessResponse<AuthUserResponse>> login(
+    @Operation(summary = "Log in with email and password")
+    @ApiResponse(responseCode = "200", description = "User authenticated",
+            content = @Content(schema = @Schema(implementation = AuthUserResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid login payload")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    public ResponseEntity<AuthUserResponse> login(
             @Valid @RequestBody LoginRequest request,
-            HttpServletResponse response
+            @Parameter(hidden = true) HttpServletResponse response
     ) {
-        AuthSessionResponse session = loginUserInputPort.execute(request);
+        AuthSessionResponse session = loginUserPort.execute(request);
         authCookieService.setAuthCookie(response, session.token());
-        return ResponseEntity.ok(new ApiSuccessResponse<>(true, session.user()));
+        return ResponseEntity.ok(session.user());
     }
 
     @GetMapping("/me")
-    public ApiSuccessResponse<AuthUserResponse> me(Authentication authentication) {
+    @Operation(summary = "Get the current authenticated user")
+    @ApiResponse(responseCode = "200", description = "Current user returned",
+            content = @Content(schema = @Schema(implementation = AuthUserResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    public AuthUserResponse me(@Parameter(hidden = true) Authentication authentication) {
         if (authentication == null) {
             throw new InvalidCredentialsException();
         }
-        return new ApiSuccessResponse<>(true, getCurrentUserInputPort.execute(authentication.getName()));
+        return getCurrentUserPort.execute(authentication.getName());
     }
 
     @PatchMapping("/email")
-    public ApiSuccessResponse<AuthUserResponse> updateEmail(
-            Authentication authentication,
+    @Operation(summary = "Update the authenticated user's email")
+    @ApiResponse(responseCode = "200", description = "Email updated",
+            content = @Content(schema = @Schema(implementation = AuthUserResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid email payload")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    public AuthUserResponse updateEmail(
+            @Parameter(hidden = true) Authentication authentication,
             @Valid @RequestBody UpdateEmailRequest request,
-            HttpServletResponse response
+            @Parameter(hidden = true) HttpServletResponse response
     ) {
         if (authentication == null) {
             throw new InvalidCredentialsException();
         }
 
-        AuthSessionResponse session = updateCurrentUserEmailInputPort.execute(authentication.getName(), request);
+        AuthSessionResponse session = updateCurrentUserEmailPort.execute(authentication.getName(), request);
         authCookieService.setAuthCookie(response, session.token());
-        return new ApiSuccessResponse<>(true, session.user());
+        return session.user();
     }
 
     @PostMapping("/logout")
-    public ApiSuccessResponse<Void> logout(HttpServletResponse response) {
+    @Operation(summary = "Clear the authentication cookie")
+    @ApiResponse(responseCode = "200", description = "Auth cookie cleared")
+    public Void logout(@Parameter(hidden = true) HttpServletResponse response) {
         authCookieService.clearAuthCookie(response);
-        return new ApiSuccessResponse<>(true, null);
+        return null;
     }
 }

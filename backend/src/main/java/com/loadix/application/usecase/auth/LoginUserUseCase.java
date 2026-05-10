@@ -7,29 +7,29 @@ import java.util.Objects;
 import com.loadix.application.dto.request.LoginRequest;
 import com.loadix.application.dto.response.AuthSessionResponse;
 import com.loadix.application.mapper.AuthMapper;
-import com.loadix.application.port.in.LoginUserInputPort;
-import com.loadix.application.port.out.AuthTokenService;
-import com.loadix.application.port.out.PasswordHasher;
-import com.loadix.application.port.out.UserAccountRepository;
+import com.loadix.application.port.in.LoginUserPort;
+import com.loadix.application.port.out.AuthTokenPort;
+import com.loadix.application.port.out.PasswordHasherPort;
+import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.domain.exception.InvalidCredentialsException;
 import com.loadix.domain.model.UserAccount;
 
-public class LoginUserUseCase implements LoginUserInputPort {
+public class LoginUserUseCase implements LoginUserPort {
 
-    private final UserAccountRepository userAccountRepository;
-    private final PasswordHasher passwordHasher;
-    private final AuthTokenService authTokenService;
+    private final UserAccountPort userAccountPort;
+    private final PasswordHasherPort passwordHasherPort;
+    private final AuthTokenPort authTokenPort;
     private final AuthMapper authMapper;
 
     public LoginUserUseCase(
-            UserAccountRepository userAccountRepository,
-            PasswordHasher passwordHasher,
-            AuthTokenService authTokenService,
+            UserAccountPort userAccountPort,
+            PasswordHasherPort passwordHasherPort,
+            AuthTokenPort authTokenPort,
             AuthMapper authMapper
     ) {
-        this.userAccountRepository = Objects.requireNonNull(userAccountRepository, "userAccountRepository cannot be null");
-        this.passwordHasher = Objects.requireNonNull(passwordHasher, "passwordHasher cannot be null");
-        this.authTokenService = Objects.requireNonNull(authTokenService, "authTokenService cannot be null");
+        this.userAccountPort = Objects.requireNonNull(userAccountPort, "userAccountPort cannot be null");
+        this.passwordHasherPort = Objects.requireNonNull(passwordHasherPort, "passwordHasherPort cannot be null");
+        this.authTokenPort = Objects.requireNonNull(authTokenPort, "authTokenPort cannot be null");
         this.authMapper = Objects.requireNonNull(authMapper, "authMapper cannot be null");
     }
 
@@ -38,14 +38,14 @@ public class LoginUserUseCase implements LoginUserInputPort {
         LoginRequest nonNullRequest = Objects.requireNonNull(request, "request cannot be null");
         String email = normalizeEmail(nonNullRequest.email());
 
-        UserAccount user = userAccountRepository.findByEmail(email)
+        UserAccount user = userAccountPort.findByEmail(email)
                 .orElseThrow(InvalidCredentialsException::new);
 
-        if (!passwordHasher.matches(nonNullRequest.password(), user.passwordHash())) {
+        if (!passwordHasherPort.matches(nonNullRequest.password(), user.passwordHash())) {
             throw new InvalidCredentialsException();
         }
 
-        String token = authTokenService.createToken(user.email(), List.of(user.role().name()));
+        String token = authTokenPort.createToken(user.email(), List.of(user.role().name()));
 
         return new AuthSessionResponse(
                 authMapper.toAuthUserResponse(user),

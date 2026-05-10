@@ -6,25 +6,25 @@ import java.util.Objects;
 import com.loadix.application.dto.request.RegisterRequest;
 import com.loadix.application.dto.response.AuthUserResponse;
 import com.loadix.application.mapper.AuthMapper;
-import com.loadix.application.port.in.RegisterUserInputPort;
-import com.loadix.application.port.out.PasswordHasher;
-import com.loadix.application.port.out.UserAccountRepository;
+import com.loadix.application.port.in.RegisterUserPort;
+import com.loadix.application.port.out.PasswordHasherPort;
+import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.domain.exception.UserAlreadyExistsException;
 import com.loadix.domain.model.UserAccount;
 
-public class RegisterUserUseCase implements RegisterUserInputPort {
+public class RegisterUserUseCase implements RegisterUserPort {
 
-    private final UserAccountRepository userAccountRepository;
-    private final PasswordHasher passwordHasher;
+    private final UserAccountPort userAccountPort;
+    private final PasswordHasherPort passwordHasherPort;
     private final AuthMapper authMapper;
 
     public RegisterUserUseCase(
-            UserAccountRepository userAccountRepository,
-            PasswordHasher passwordHasher,
+            UserAccountPort userAccountPort,
+            PasswordHasherPort passwordHasherPort,
             AuthMapper authMapper) {
-        this.userAccountRepository = Objects.requireNonNull(userAccountRepository,
-                "userAccountRepository cannot be null");
-        this.passwordHasher = Objects.requireNonNull(passwordHasher, "passwordHasher cannot be null");
+        this.userAccountPort = Objects.requireNonNull(userAccountPort,
+                "userAccountPort cannot be null");
+        this.passwordHasherPort = Objects.requireNonNull(passwordHasherPort, "passwordHasherPort cannot be null");
         this.authMapper = Objects.requireNonNull(authMapper, "authMapper cannot be null");
     }
 
@@ -33,14 +33,14 @@ public class RegisterUserUseCase implements RegisterUserInputPort {
         RegisterRequest nonNullRequest = Objects.requireNonNull(request, "request cannot be null");
         String email = normalizeEmail(nonNullRequest.email());
 
-        if (userAccountRepository.existsByEmail(email)) {
+        if (userAccountPort.existsByEmail(email)) {
             throw new UserAlreadyExistsException();
         }
 
-        UserAccount saved = userAccountRepository.save(new UserAccount(
+        UserAccount saved = userAccountPort.save(new UserAccount(
                 null,
                 email,
-                passwordHasher.hash(nonNullRequest.password()),
+                passwordHasherPort.hash(nonNullRequest.password()),
                 nonNullRequest.role(),
                 false));
 

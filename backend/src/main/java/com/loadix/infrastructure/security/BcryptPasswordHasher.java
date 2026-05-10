@@ -3,10 +3,10 @@ package com.loadix.infrastructure.security;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.loadix.application.port.out.PasswordHasher;
+import com.loadix.application.port.out.PasswordHasherPort;
 
 @Component
-public class BcryptPasswordHasher implements PasswordHasher {
+public class BcryptPasswordHasher implements PasswordHasherPort {
 
     private final PasswordEncoder passwordEncoder;
 
