@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.loadix.application.dto.request.CreateCarrierProfileRequest;
 import com.loadix.application.dto.request.CreateWarehouseProfileRequest;
+import com.loadix.application.dto.request.UpdateCarrierProfileRequest;
 import com.loadix.application.dto.request.UpdateWarehouseProfileRequest;
 import com.loadix.application.dto.response.CarrierProfileResponse;
 import com.loadix.application.dto.response.WarehouseProfileResponse;
@@ -18,6 +19,7 @@ import com.loadix.application.port.in.CreateCarrierProfilePort;
 import com.loadix.application.port.in.CreateWarehouseProfilePort;
 import com.loadix.application.port.in.GetCarrierProfilePort;
 import com.loadix.application.port.in.GetWarehouseProfilePort;
+import com.loadix.application.port.in.UpdateCarrierProfilePort;
 import com.loadix.application.port.in.UpdateWarehouseProfilePort;
 import com.loadix.domain.exception.InvalidCredentialsException;
 
@@ -40,18 +42,21 @@ public class ProfileController {
     private final UpdateWarehouseProfilePort updateWarehouseProfilePort;
     private final CreateCarrierProfilePort createCarrierProfilePort;
     private final GetCarrierProfilePort getCarrierProfilePort;
+    private final UpdateCarrierProfilePort updateCarrierProfilePort;
 
     public ProfileController(
         CreateWarehouseProfilePort createWarehouseProfilePort,
         GetWarehouseProfilePort getWarehouseProfilePort,
         UpdateWarehouseProfilePort updateWarehouseProfilePort,
         CreateCarrierProfilePort createCarrierProfilePort,
-        GetCarrierProfilePort getCarrierProfilePort) {
+        GetCarrierProfilePort getCarrierProfilePort,
+        UpdateCarrierProfilePort updateCarrierProfilePort) {
             this.createWarehouseProfilePort = createWarehouseProfilePort;
             this.getWarehouseProfilePort = getWarehouseProfilePort;
             this.updateWarehouseProfilePort = updateWarehouseProfilePort;
             this.createCarrierProfilePort = createCarrierProfilePort;
             this.getCarrierProfilePort = getCarrierProfilePort;
+            this.updateCarrierProfilePort = updateCarrierProfilePort;
     }
 
     @PostMapping("/warehouse")
@@ -135,5 +140,22 @@ public class ProfileController {
         }
 
         return getCarrierProfilePort.execute(authentication.getName());
+    }
+
+    @PutMapping("/carrier")
+    @Operation(summary = "Update the authenticated carrier profile")
+    @ApiResponse(responseCode = "200", description = "Carrier profile updated",
+            content = @Content(schema = @Schema(implementation = CarrierProfileResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid carrier profile payload")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    public CarrierProfileResponse updateCarrierProfile(
+        @Parameter(hidden = true) Authentication authentication,
+        @Valid @RequestBody UpdateCarrierProfileRequest request
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        return updateCarrierProfilePort.execute(authentication.getName(), request);
     }
 }

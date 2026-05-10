@@ -189,6 +189,55 @@ class ProfileControllerTest extends IntegrationTestContainers {
         }
 
         @Test
+        void updatesCarrierProfileForAuthenticatedUser() throws Exception {
+                Cookie authCookie = registerAndLoginCarrierUser("carrier-update-profile@loadix.test");
+
+                mockMvc.perform(post("/api/v1/profiles/carrier")
+                                .cookie(authCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{" +
+                                                "\"name\":\"Carlos\"," +
+                                                "\"lastName\":\"Gomez\"," +
+                                                "\"phone\":\"612345678\"," +
+                                                "\"vehicleType\":\"FURGONETA\"," +
+                                                "\"licensePlate\":\"1234ABC\"," +
+                                                "\"carnet\":\"C1\"}"))
+                                .andExpect(status().isOk());
+
+                mockMvc.perform(put("/api/v1/profiles/carrier")
+                                .cookie(authCookie)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{" +
+                                                "\"name\":\"Laura\"," +
+                                                "\"lastName\":\"Martin\"," +
+                                                "\"phone\":\"699999999\"," +
+                                                "\"vehicleType\":\"TRAILER\"," +
+                                                "\"licensePlate\":\"9999ZZZ\"," +
+                                                "\"carnet\":\"C+E\"}"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.name").value("Laura"))
+                                .andExpect(jsonPath("$.lastName").value("Martin"))
+                                .andExpect(jsonPath("$.phone").value("699999999"))
+                                .andExpect(jsonPath("$.vehicleType").value("TRAILER"))
+                                .andExpect(jsonPath("$.licensePlate").value("9999ZZZ"))
+                                .andExpect(jsonPath("$.completed").value(true));
+        }
+
+        @Test
+        void rejectsCarrierProfileUpdateWithoutAuthentication() throws Exception {
+                mockMvc.perform(put("/api/v1/profiles/carrier")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{" +
+                                                "\"name\":\"Laura\"," +
+                                                "\"lastName\":\"Martin\"," +
+                                                "\"phone\":\"699999999\"," +
+                                                "\"vehicleType\":\"TRAILER\"," +
+                                                "\"licensePlate\":\"9999ZZZ\"," +
+                                                "\"carnet\":\"C+E\"}"))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
         void rejectsWarehouseProfileWithoutAuthentication() throws Exception {
                 mockMvc.perform(get("/api/v1/profiles/warehouse"))
                                 .andExpect(status().isUnauthorized());
