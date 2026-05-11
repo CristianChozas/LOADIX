@@ -1,15 +1,25 @@
 package com.loadix.infrastructure.in.web.controller;
 
+import java.time.LocalDate;
+
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.Authentication;
 
 import com.loadix.application.dto.request.CreateLoadRequest;
+import com.loadix.application.dto.request.UpdateLoadRequest;
 import com.loadix.application.dto.response.LoadResponse;
+import com.loadix.application.dto.response.MyLoadsPageResponse;
 import com.loadix.application.port.in.CreateLoadPort;
+import com.loadix.application.port.in.GetMyLoadsPort;
+import com.loadix.application.port.in.UpdateMyLoadPort;
 import com.loadix.domain.exception.InvalidCredentialsException;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,9 +37,13 @@ import jakarta.validation.Valid;
 public class LoadController {
 
     private final CreateLoadPort createLoadPort;
+    private final GetMyLoadsPort getMyLoadsPort;
+    private final UpdateMyLoadPort updateMyLoadPort;
 
-    public LoadController(CreateLoadPort createLoadPort) {
+    public LoadController(CreateLoadPort createLoadPort, GetMyLoadsPort getMyLoadsPort, UpdateMyLoadPort updateMyLoadPort) {
         this.createLoadPort = createLoadPort;
+        this.getMyLoadsPort = getMyLoadsPort;
+        this.updateMyLoadPort = updateMyLoadPort;
     }
 
     @PostMapping
@@ -48,5 +62,56 @@ public class LoadController {
         }
 
         return createLoadPort.execute(authentication.getName(), request);
+    }
+
+    @GetMapping("/mine")
+    @Operation(summary = "List my load publications")
+    @ApiResponse(responseCode = "200", description = "Loads retrieved successfully",
+        content = @Content(schema = @Schema(implementation = MyLoadsPageResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid query params")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    @ApiResponse(responseCode = "403", description = "Forbidden for current user")
+    public MyLoadsPageResponse getMyLoads(
+        @Parameter(hidden = true) Authentication authentication,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "desc") String sort,
+        @RequestParam(required = false) LocalDate pickupDateFrom,
+        @RequestParam(required = false) LocalDate pickupDateTo
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        boolean sortAsc = "asc".equalsIgnoreCase(sort);
+
+        return getMyLoadsPort.execute(
+            authentication.getName(),
+            page,
+            size,
+            sortAsc,
+            pickupDateFrom,
+            pickupDateTo
+        );
+    }
+
+    @PutMapping("/{loadId}")
+    @Operation(summary = "Edit my published load")
+    @ApiResponse(responseCode = "200", description = "Load updated successfully",
+        content = @Content(schema = @Schema(implementation = LoadResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid payload")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    @ApiResponse(responseCode = "403", description = "Forbidden for current user")
+    @ApiResponse(responseCode = "404", description = "Load not found")
+    public LoadResponse updateMyLoad(
+        @Parameter(hidden = true) Authentication authentication,
+        @PathVariable java.util.UUID loadId,
+        @Valid @RequestBody UpdateLoadRequest request
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        return updateMyLoadPort.execute(authentication.getName(), loadId, request);
     }
 }

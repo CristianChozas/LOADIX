@@ -108,6 +108,22 @@ public class LoadJpaEntity extends BaseJpaEntity {
         );
     }
 
+    public void updateFromDomain(LoadPublication loadPublication) {
+        this.originAddress = loadPublication.originAddress();
+        this.originCity = loadPublication.originCity();
+        this.originPostalCode = loadPublication.originPostalCode();
+        this.destinationAddress = loadPublication.destinationAddress();
+        this.destinationCity = loadPublication.destinationCity();
+        this.destinationPostalCode = loadPublication.destinationPostalCode();
+        this.cargoType = loadPublication.cargoType().name();
+        this.weightKg = loadPublication.weightKg();
+        this.pickupDate = loadPublication.pickupDate();
+        this.basePriceAmount = loadPublication.basePriceAmount();
+        this.notes = loadPublication.notes();
+        this.specialRequirements = loadPublication.specialRequirements();
+        this.status = loadPublication.status().name();
+    }
+
     public UUID getWarehouseUserId() {
         return warehouseUserId;
     }

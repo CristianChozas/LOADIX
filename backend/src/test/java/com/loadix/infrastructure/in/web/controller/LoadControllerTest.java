@@ -1,7 +1,9 @@
 package com.loadix.infrastructure.in.web.controller;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.loadix.support.IntegrationTestContainers;
 
@@ -24,6 +28,8 @@ class LoadControllerTest extends IntegrationTestContainers {
 
     @Autowired
     private MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void publishesLoadForWarehouseWithCompletedProfile() throws Exception {
@@ -80,6 +86,68 @@ class LoadControllerTest extends IntegrationTestContainers {
             .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void listsMyLoadsPaginatedWithMostRecentFirst() throws Exception {
+        Cookie authCookie = registerAndLoginWarehouseUser("load-list@loadix.test");
+        createWarehouseProfile(authCookie);
+
+        publishLoad(authCookie, "Madrid", "2099-01-10", 850.0);
+        publishLoad(authCookie, "Sevilla", "2099-02-12", 910.0);
+
+        mockMvc.perform(get("/api/v1/loads/mine")
+                .cookie(authCookie)
+                .param("page", "0")
+                .param("size", "10")
+                .param("sort", "desc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(2))
+            .andExpect(jsonPath("$.items[0].origin.city").value("Sevilla"))
+            .andExpect(jsonPath("$.items[1].origin.city").value("Madrid"));
+    }
+
+    @Test
+    void filtersMyLoadsByPickupDateRange() throws Exception {
+        Cookie authCookie = registerAndLoginWarehouseUser("load-range@loadix.test");
+        createWarehouseProfile(authCookie);
+
+        publishLoad(authCookie, "Bilbao", "2099-01-05", 700.0);
+        publishLoad(authCookie, "Zaragoza", "2099-03-15", 880.0);
+
+        mockMvc.perform(get("/api/v1/loads/mine")
+                .cookie(authCookie)
+                .param("pickupDateFrom", "2099-03-01")
+                .param("pickupDateTo", "2099-03-31"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.items[0].origin.city").value("Zaragoza"));
+    }
+
+    @Test
+    void updatesMyPublishedLoad() throws Exception {
+        Cookie authCookie = registerAndLoginWarehouseUser("load-update@loadix.test");
+        createWarehouseProfile(authCookie);
+
+        MvcResult created = publishLoad(authCookie, "Madrid", "2099-05-10", 850.0);
+        JsonNode body = objectMapper.readTree(created.getResponse().getContentAsString());
+        String loadId = body.get("id").asText();
+
+        mockMvc.perform(put("/api/v1/loads/{id}", loadId)
+                .cookie(authCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"origin\":{\"address\":\"Calle Nueva 9\",\"city\":\"Barcelona\",\"postalCode\":\"08001\"}," +
+                    "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"Valencia\",\"postalCode\":\"46001\"}," +
+                    "\"cargoType\":\"PALLETIZED\"," +
+                    "\"weightKg\":1300.0," +
+                    "\"pickupDate\":\"2099-05-12\"," +
+                    "\"basePriceAmount\":920.0," +
+                    "\"notes\":\"Actualizada\"," +
+                    "\"specialRequirements\":\"Nada\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.origin.city").value("Barcelona"))
+            .andExpect(jsonPath("$.basePriceAmount").value(920.0));
+    }
+
     private void createWarehouseProfile(Cookie authCookie) throws Exception {
         mockMvc.perform(post("/api/v1/profiles/warehouse")
                 .cookie(authCookie)
@@ -94,6 +162,21 @@ class LoadControllerTest extends IntegrationTestContainers {
                     "\"contactPerson\":\"Ana Lopez\"," +
                     "\"cargoType\":\"PALLETIZED\"}"))
             .andExpect(status().isOk());
+    }
+
+    private MvcResult publishLoad(Cookie authCookie, String originCity, String pickupDate, double basePriceAmount) throws Exception {
+        return mockMvc.perform(post("/api/v1/loads")
+                .cookie(authCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"origin\":{\"address\":\"Calle Uno 1\",\"city\":\"" + originCity + "\",\"postalCode\":\"28001\"}," +
+                    "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"Valencia\",\"postalCode\":\"46001\"}," +
+                    "\"cargoType\":\"PALLETIZED\"," +
+                    "\"weightKg\":1200.5," +
+                    "\"pickupDate\":\"" + pickupDate + "\"," +
+                    "\"basePriceAmount\":" + basePriceAmount + "}"))
+            .andExpect(status().isOk())
+            .andReturn();
     }
 
     private Cookie registerAndLoginWarehouseUser(String email) throws Exception {
