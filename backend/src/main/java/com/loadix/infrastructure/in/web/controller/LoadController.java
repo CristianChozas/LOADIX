@@ -18,6 +18,7 @@ import com.loadix.application.dto.request.UpdateLoadRequest;
 import com.loadix.application.dto.response.LoadResponse;
 import com.loadix.application.dto.response.MyLoadsPageResponse;
 import com.loadix.application.port.in.CreateLoadPort;
+import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
 import com.loadix.application.port.in.UpdateMyLoadPort;
 import com.loadix.domain.exception.InvalidCredentialsException;
@@ -38,11 +39,18 @@ public class LoadController {
 
     private final CreateLoadPort createLoadPort;
     private final GetMyLoadsPort getMyLoadsPort;
+    private final GetAvailableLoadsPort getAvailableLoadsPort;
     private final UpdateMyLoadPort updateMyLoadPort;
 
-    public LoadController(CreateLoadPort createLoadPort, GetMyLoadsPort getMyLoadsPort, UpdateMyLoadPort updateMyLoadPort) {
+    public LoadController(
+        CreateLoadPort createLoadPort,
+        GetMyLoadsPort getMyLoadsPort,
+        GetAvailableLoadsPort getAvailableLoadsPort,
+        UpdateMyLoadPort updateMyLoadPort
+    ) {
         this.createLoadPort = createLoadPort;
         this.getMyLoadsPort = getMyLoadsPort;
+        this.getAvailableLoadsPort = getAvailableLoadsPort;
         this.updateMyLoadPort = updateMyLoadPort;
     }
 
@@ -93,6 +101,27 @@ public class LoadController {
             pickupDateFrom,
             pickupDateTo
         );
+    }
+
+    @GetMapping("/available")
+    @Operation(summary = "List available loads for carriers")
+    @ApiResponse(responseCode = "200", description = "Available loads retrieved successfully",
+        content = @Content(schema = @Schema(implementation = MyLoadsPageResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid query params")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    @ApiResponse(responseCode = "403", description = "Forbidden for current user")
+    public MyLoadsPageResponse getAvailableLoads(
+        @Parameter(hidden = true) Authentication authentication,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "desc") String sort
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        boolean sortAsc = "asc".equalsIgnoreCase(sort);
+        return getAvailableLoadsPort.execute(authentication.getName(), page, size, sortAsc);
     }
 
     @PutMapping("/{loadId}")

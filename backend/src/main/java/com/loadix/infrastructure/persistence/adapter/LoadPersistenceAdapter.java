@@ -15,6 +15,7 @@ import com.loadix.application.port.out.LoadPort;
 import com.loadix.domain.model.LoadPageResult;
 import com.loadix.domain.model.LoadPublication;
 import com.loadix.domain.model.PersistedLoadPublication;
+import com.loadix.domain.valueobject.LoadStatus;
 import com.loadix.infrastructure.persistence.entity.LoadJpaEntity;
 import com.loadix.infrastructure.persistence.repository.LoadJpaRepository;
 
@@ -67,6 +68,28 @@ public class LoadPersistenceAdapter implements LoadPort {
     }
 
     @Override
+    public LoadPageResult findAvailableLoads(int page, int size, boolean sortAsc) {
+        Sort sort = sortAsc
+            ? Sort.by(Sort.Direction.ASC, "createdAt")
+            : Sort.by(Sort.Direction.DESC, "createdAt");
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Specification<LoadJpaEntity> specification = byStatus(LoadStatus.PUBLISHED);
+
+        Page<LoadJpaEntity> result = loadJpaRepository.findAll(specification, pageable);
+
+        return new LoadPageResult(
+            result.getContent().stream().map(LoadJpaEntity::toDomain).toList(),
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages(),
+            result.hasNext(),
+            result.hasPrevious()
+        );
+    }
+
+    @Override
     public PersistedLoadPublication updateById(UUID loadId, LoadPublication loadPublication) {
         LoadJpaEntity existing = loadJpaRepository.findById(loadId)
             .orElseThrow();
@@ -99,5 +122,9 @@ public class LoadPersistenceAdapter implements LoadPort {
         }
 
         return (root, query, criteriaBuilder) -> criteriaBuilder.lessThanOrEqualTo(root.get("pickupDate"), pickupDateTo);
+    }
+
+    private Specification<LoadJpaEntity> byStatus(LoadStatus status) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("status"), status.name());
     }
 }

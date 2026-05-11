@@ -158,6 +158,38 @@ class LoadControllerTest extends IntegrationTestContainers {
             .andExpect(jsonPath("$.basePriceAmount").value(920.0));
     }
 
+    @Test
+    void listsAvailableLoadsForCarrier() throws Exception {
+        Cookie warehouseCookie = registerAndLoginWarehouseUser("load-available-warehouse@loadix.test");
+        createWarehouseProfile(warehouseCookie);
+        publishLoad(warehouseCookie, "Madrid", "2099-06-01", 700.0);
+        publishLoad(warehouseCookie, "Bilbao", "2099-06-10", 900.0);
+
+        Cookie carrierCookie = registerAndLoginCarrierUser("load-available-carrier@loadix.test");
+
+        mockMvc.perform(get("/api/v1/loads/available")
+                .cookie(carrierCookie)
+                .param("page", "0")
+                .param("size", "2")
+                .param("sort", "desc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.items[0].origin.city").value("Bilbao"))
+            .andExpect(jsonPath("$.items[1].origin.city").value("Madrid"))
+            .andExpect(jsonPath("$.items[0].loadQuantity").value(10))
+            .andExpect(jsonPath("$.items[0].loadUnitType").value("PALLETS"));
+    }
+
+    @Test
+    void rejectsAvailableLoadsForWarehouseRole() throws Exception {
+        Cookie warehouseCookie = registerAndLoginWarehouseUser("load-available-forbidden@loadix.test");
+
+        mockMvc.perform(get("/api/v1/loads/available")
+                .cookie(warehouseCookie)
+                .param("page", "0")
+                .param("size", "10"))
+            .andExpect(status().isForbidden());
+    }
+
     private void createWarehouseProfile(Cookie authCookie) throws Exception {
         mockMvc.perform(post("/api/v1/profiles/warehouse")
                 .cookie(authCookie)

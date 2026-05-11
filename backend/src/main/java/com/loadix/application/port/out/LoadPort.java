@@ -21,6 +21,12 @@ public interface LoadPort {
         LocalDate pickupDateTo
     );
 
+    LoadPageResult findAvailableLoads(
+        int page,
+        int size,
+        boolean sortAsc
+    );
+
     PersistedLoadPublication updateById(UUID loadId, LoadPublication loadPublication);
 
     Optional<PersistedLoadPublication> findById(UUID loadId);
