@@ -12,6 +12,7 @@ import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.out.LoadPort;
 import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.domain.exception.UserNotFoundException;
+import com.loadix.domain.model.AvailableLoadsFilters;
 import com.loadix.domain.model.UserAccount;
 import com.loadix.domain.valueobject.UserRole;
 
@@ -28,7 +29,13 @@ public class GetAvailableLoadsUseCase implements GetAvailableLoadsPort {
     }
 
     @Override
-    public MyLoadsPageResponse execute(String authenticatedEmail, int page, int size, boolean sortAsc) {
+    public MyLoadsPageResponse execute(
+        String authenticatedEmail,
+        int page,
+        int size,
+        boolean sortAsc,
+        AvailableLoadsFilters filters
+    ) {
         UserAccount user = userAccountPort.findByEmail(normalizeEmail(authenticatedEmail))
             .orElseThrow(UserNotFoundException::new);
 
@@ -39,7 +46,7 @@ public class GetAvailableLoadsUseCase implements GetAvailableLoadsPort {
         int sanitizedPage = Math.max(page, 0);
         int sanitizedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
 
-        var result = loadPort.findAvailableLoads(sanitizedPage, sanitizedSize, sortAsc);
+        var result = loadPort.findAvailableLoads(sanitizedPage, sanitizedSize, sortAsc, filters);
 
         List<LoadResponse> items = result.items().stream()
             .map(load -> new LoadResponse(

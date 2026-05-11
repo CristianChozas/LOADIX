@@ -1,5 +1,6 @@
 package com.loadix.infrastructure.in.web.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +22,8 @@ import com.loadix.application.port.in.CreateLoadPort;
 import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
 import com.loadix.application.port.in.UpdateMyLoadPort;
+import com.loadix.domain.model.AvailableLoadsFilters;
+import com.loadix.domain.valueobject.CargoType;
 import com.loadix.domain.exception.InvalidCredentialsException;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -114,14 +117,39 @@ public class LoadController {
         @Parameter(hidden = true) Authentication authentication,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "desc") String sort
+        @RequestParam(defaultValue = "desc") String sort,
+        @RequestParam(required = false) String query,
+        @RequestParam(required = false) String origin,
+        @RequestParam(required = false) String destination,
+        @RequestParam(required = false) LocalDate pickupDate,
+        @RequestParam(required = false) Integer palletsMin,
+        @RequestParam(required = false) Integer palletsMax,
+        @RequestParam(required = false) BigDecimal weightKgMin,
+        @RequestParam(required = false) BigDecimal weightKgMax,
+        @RequestParam(required = false) CargoType cargoType,
+        @RequestParam(required = false) BigDecimal priceMin,
+        @RequestParam(required = false) BigDecimal priceMax
     ) {
         if (authentication == null) {
             throw new InvalidCredentialsException();
         }
 
         boolean sortAsc = "asc".equalsIgnoreCase(sort);
-        return getAvailableLoadsPort.execute(authentication.getName(), page, size, sortAsc);
+        AvailableLoadsFilters filters = new AvailableLoadsFilters(
+            query,
+            origin,
+            destination,
+            pickupDate,
+            palletsMin,
+            palletsMax,
+            weightKgMin,
+            weightKgMax,
+            cargoType,
+            priceMin,
+            priceMax
+        );
+
+        return getAvailableLoadsPort.execute(authentication.getName(), page, size, sortAsc, filters);
     }
 
     @PutMapping("/{loadId}")

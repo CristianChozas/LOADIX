@@ -162,8 +162,8 @@ class LoadControllerTest extends IntegrationTestContainers {
     void listsAvailableLoadsForCarrier() throws Exception {
         Cookie warehouseCookie = registerAndLoginWarehouseUser("load-available-warehouse@loadix.test");
         createWarehouseProfile(warehouseCookie);
-        publishLoad(warehouseCookie, "Madrid", "2099-06-01", 700.0);
-        publishLoad(warehouseCookie, "Bilbao", "2099-06-10", 900.0);
+        publishLoad(warehouseCookie, "Madrid", "Valencia", "PALLETIZED", "2099-06-01", 10, 1200.5, 700.0);
+        publishLoad(warehouseCookie, "Bilbao", "Sevilla", "PALLETIZED", "2099-06-10", 10, 1200.5, 900.0);
 
         Cookie carrierCookie = registerAndLoginCarrierUser("load-available-carrier@loadix.test");
 
@@ -177,6 +177,35 @@ class LoadControllerTest extends IntegrationTestContainers {
             .andExpect(jsonPath("$.items[1].origin.city").value("Madrid"))
             .andExpect(jsonPath("$.items[0].loadQuantity").value(10))
             .andExpect(jsonPath("$.items[0].loadUnitType").value("PALLETS"));
+    }
+
+    @Test
+    void filtersAvailableLoadsForCarrierBySearchAndStructuredFilters() throws Exception {
+        Cookie warehouseCookie = registerAndLoginWarehouseUser("load-available-filter-warehouse@loadix.test");
+        createWarehouseProfile(warehouseCookie);
+
+        publishLoad(warehouseCookie, "Madrid", "Sevilla", "PALLETIZED", "2099-07-01", 12, 1200.0, 900.0);
+        publishLoad(warehouseCookie, "Barcelona", "Valencia", "REFRIGERATED", "2099-07-15", 8, 800.0, 1200.0);
+
+        Cookie carrierCookie = registerAndLoginCarrierUser("load-available-filter-carrier@loadix.test");
+
+        mockMvc.perform(get("/api/v1/loads/available")
+                .cookie(carrierCookie)
+                .param("query", "valen")
+                .param("destination", "Valencia")
+                .param("pickupDate", "2099-07-15")
+                .param("palletsMin", "6")
+                .param("palletsMax", "10")
+                .param("weightKgMin", "700")
+                .param("weightKgMax", "900")
+                .param("cargoType", "REFRIGERATED")
+                .param("priceMin", "1000")
+                .param("priceMax", "1300"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.items[0].origin.city").value("Barcelona"))
+            .andExpect(jsonPath("$.items[0].destination.city").value("Valencia"))
+            .andExpect(jsonPath("$.items[0].cargoType").value("REFRIGERATED"));
     }
 
     @Test
@@ -207,15 +236,28 @@ class LoadControllerTest extends IntegrationTestContainers {
     }
 
     private MvcResult publishLoad(Cookie authCookie, String originCity, String pickupDate, double basePriceAmount) throws Exception {
+        return publishLoad(authCookie, originCity, "Valencia", "PALLETIZED", pickupDate, 10, 1200.5, basePriceAmount);
+    }
+
+    private MvcResult publishLoad(
+        Cookie authCookie,
+        String originCity,
+        String destinationCity,
+        String cargoType,
+        String pickupDate,
+        int loadQuantity,
+        double weightKg,
+        double basePriceAmount
+    ) throws Exception {
         return mockMvc.perform(post("/api/v1/loads")
                 .cookie(authCookie)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{" +
                     "\"origin\":{\"address\":\"Calle Uno 1\",\"city\":\"" + originCity + "\",\"postalCode\":\"28001\"}," +
-                    "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"Valencia\",\"postalCode\":\"46001\"}," +
-                    "\"cargoType\":\"PALLETIZED\"," +
-                    "\"weightKg\":1200.5," +
-                    "\"loadQuantity\":10," +
+                    "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"" + destinationCity + "\",\"postalCode\":\"46001\"}," +
+                    "\"cargoType\":\"" + cargoType + "\"," +
+                    "\"weightKg\":" + weightKg + "," +
+                    "\"loadQuantity\":" + loadQuantity + "," +
                     "\"loadUnitType\":\"PALLETS\"," +
                     "\"pickupDate\":\"" + pickupDate + "\"," +
                     "\"basePriceAmount\":" + basePriceAmount + "}"))

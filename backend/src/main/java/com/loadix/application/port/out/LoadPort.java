@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.loadix.domain.model.AvailableLoadsFilters;
 import com.loadix.domain.model.LoadPublication;
 import com.loadix.domain.model.LoadPageResult;
 import com.loadix.domain.model.PersistedLoadPublication;
@@ -24,7 +25,8 @@ public interface LoadPort {
     LoadPageResult findAvailableLoads(
         int page,
         int size,
-        boolean sortAsc
+        boolean sortAsc,
+        AvailableLoadsFilters filters
     );
 
     PersistedLoadPublication updateById(UUID loadId, LoadPublication loadPublication);

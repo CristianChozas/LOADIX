@@ -1,6 +1,7 @@
 package com.loadix.application.port.in;
 
 import com.loadix.application.dto.response.MyLoadsPageResponse;
+import com.loadix.domain.model.AvailableLoadsFilters;
 
 public interface GetAvailableLoadsPort {
 
@@ -8,6 +9,7 @@ public interface GetAvailableLoadsPort {
         String authenticatedEmail,
         int page,
         int size,
-        boolean sortAsc
+        boolean sortAsc,
+        AvailableLoadsFilters filters
     );
 }
