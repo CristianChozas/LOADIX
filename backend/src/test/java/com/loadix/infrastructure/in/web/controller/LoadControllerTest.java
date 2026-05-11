@@ -44,6 +44,8 @@ class LoadControllerTest extends IntegrationTestContainers {
                     "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"Valencia\",\"postalCode\":\"46001\"}," +
                     "\"cargoType\":\"PALLETIZED\"," +
                     "\"weightKg\":1200.5," +
+                    "\"loadQuantity\":24," +
+                    "\"loadUnitType\":\"PALLETS\"," +
                     "\"pickupDate\":\"2099-01-10\"," +
                     "\"basePriceAmount\":850.0," +
                     "\"notes\":\"Muelle 3\"," +
@@ -52,6 +54,8 @@ class LoadControllerTest extends IntegrationTestContainers {
             .andExpect(jsonPath("$.status").value("PUBLISHED"))
             .andExpect(jsonPath("$.origin.city").value("Madrid"))
             .andExpect(jsonPath("$.destination.postalCode").value("46001"))
+            .andExpect(jsonPath("$.loadQuantity").value(24))
+            .andExpect(jsonPath("$.loadUnitType").value("PALLETS"))
             .andExpect(jsonPath("$.basePriceAmount").value(850.0));
     }
 
@@ -67,6 +71,8 @@ class LoadControllerTest extends IntegrationTestContainers {
                     "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"Valencia\",\"postalCode\":\"46001\"}," +
                     "\"cargoType\":\"PALLETIZED\"," +
                     "\"weightKg\":1200.5," +
+                    "\"loadQuantity\":12," +
+                    "\"loadUnitType\":\"PALLETS\"," +
                     "\"pickupDate\":\"2099-01-10\"," +
                     "\"basePriceAmount\":850.0}"))
             .andExpect(status().isForbidden());
@@ -81,6 +87,8 @@ class LoadControllerTest extends IntegrationTestContainers {
                     "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"Valencia\",\"postalCode\":\"46001\"}," +
                     "\"cargoType\":\"PALLETIZED\"," +
                     "\"weightKg\":1200.5," +
+                    "\"loadQuantity\":12," +
+                    "\"loadUnitType\":\"PALLETS\"," +
                     "\"pickupDate\":\"2099-01-10\"," +
                     "\"basePriceAmount\":850.0}"))
             .andExpect(status().isUnauthorized());
@@ -139,6 +147,8 @@ class LoadControllerTest extends IntegrationTestContainers {
                     "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"Valencia\",\"postalCode\":\"46001\"}," +
                     "\"cargoType\":\"PALLETIZED\"," +
                     "\"weightKg\":1300.0," +
+                    "\"loadQuantity\":18," +
+                    "\"loadUnitType\":\"PALLETS\"," +
                     "\"pickupDate\":\"2099-05-12\"," +
                     "\"basePriceAmount\":920.0," +
                     "\"notes\":\"Actualizada\"," +
@@ -173,6 +183,8 @@ class LoadControllerTest extends IntegrationTestContainers {
                     "\"destination\":{\"address\":\"Avenida Dos 2\",\"city\":\"Valencia\",\"postalCode\":\"46001\"}," +
                     "\"cargoType\":\"PALLETIZED\"," +
                     "\"weightKg\":1200.5," +
+                    "\"loadQuantity\":10," +
+                    "\"loadUnitType\":\"PALLETS\"," +
                     "\"pickupDate\":\"" + pickupDate + "\"," +
                     "\"basePriceAmount\":" + basePriceAmount + "}"))
             .andExpect(status().isOk())

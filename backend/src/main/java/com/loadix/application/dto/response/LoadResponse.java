@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import com.loadix.domain.valueobject.CargoType;
 import com.loadix.domain.valueobject.LoadStatus;
+import com.loadix.domain.valueobject.LoadUnitType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -26,6 +27,10 @@ public record LoadResponse(
     CargoType cargoType,
     @Schema(description = "Cargo weight in kilograms")
     BigDecimal weightKg,
+    @Schema(description = "Load quantity")
+    int loadQuantity,
+    @Schema(description = "Load quantity unit")
+    LoadUnitType loadUnitType,
     @Schema(description = "Pickup date")
     LocalDate pickupDate,
     @Schema(description = "Base price amount without VAT")

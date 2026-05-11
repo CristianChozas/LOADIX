@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import com.loadix.domain.valueobject.CargoType;
 import com.loadix.domain.valueobject.LoadStatus;
+import com.loadix.domain.valueobject.LoadUnitType;
 
 public record PersistedLoadPublication(
     UUID id,
@@ -20,6 +21,8 @@ public record PersistedLoadPublication(
     String destinationPostalCode,
     CargoType cargoType,
     BigDecimal weightKg,
+    int loadQuantity,
+    LoadUnitType loadUnitType,
     LocalDate pickupDate,
     BigDecimal basePriceAmount,
     String notes,

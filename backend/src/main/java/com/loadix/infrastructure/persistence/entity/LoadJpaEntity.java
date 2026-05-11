@@ -8,6 +8,7 @@ import com.loadix.domain.model.LoadPublication;
 import com.loadix.domain.model.PersistedLoadPublication;
 import com.loadix.domain.valueobject.CargoType;
 import com.loadix.domain.valueobject.LoadStatus;
+import com.loadix.domain.valueobject.LoadUnitType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,6 +48,12 @@ public class LoadJpaEntity extends BaseJpaEntity {
     @Column(name = "weight_kg", nullable = false, precision = 10, scale = 2)
     private BigDecimal weightKg;
 
+    @Column(name = "load_quantity", nullable = false)
+    private int loadQuantity;
+
+    @Column(name = "load_unit_type", nullable = false, length = 32)
+    private String loadUnitType;
+
     @Column(name = "pickup_date", nullable = false)
     private LocalDate pickupDate;
 
@@ -77,6 +84,8 @@ public class LoadJpaEntity extends BaseJpaEntity {
         entity.destinationPostalCode = loadPublication.destinationPostalCode();
         entity.cargoType = loadPublication.cargoType().name();
         entity.weightKg = loadPublication.weightKg();
+        entity.loadQuantity = loadPublication.loadQuantity();
+        entity.loadUnitType = loadPublication.loadUnitType().name();
         entity.pickupDate = loadPublication.pickupDate();
         entity.basePriceAmount = loadPublication.basePriceAmount();
         entity.notes = loadPublication.notes();
@@ -98,6 +107,8 @@ public class LoadJpaEntity extends BaseJpaEntity {
             destinationPostalCode,
             CargoType.valueOf(cargoType),
             weightKg,
+            loadQuantity,
+            LoadUnitType.valueOf(loadUnitType),
             pickupDate,
             basePriceAmount,
             notes,
@@ -117,6 +128,8 @@ public class LoadJpaEntity extends BaseJpaEntity {
         this.destinationPostalCode = loadPublication.destinationPostalCode();
         this.cargoType = loadPublication.cargoType().name();
         this.weightKg = loadPublication.weightKg();
+        this.loadQuantity = loadPublication.loadQuantity();
+        this.loadUnitType = loadPublication.loadUnitType().name();
         this.pickupDate = loadPublication.pickupDate();
         this.basePriceAmount = loadPublication.basePriceAmount();
         this.notes = loadPublication.notes();

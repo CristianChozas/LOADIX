@@ -4,11 +4,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import com.loadix.domain.valueobject.CargoType;
+import com.loadix.domain.valueobject.LoadUnitType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -29,6 +31,13 @@ public record CreateLoadRequest(
     @DecimalMin(value = "0.01")
     @Schema(description = "Cargo weight in kilograms", example = "1200.50")
     BigDecimal weightKg,
+    @NotNull
+    @Min(1)
+    @Schema(description = "Load quantity", example = "24")
+    Integer loadQuantity,
+    @NotNull
+    @Schema(description = "Load quantity unit", example = "PALLETS")
+    LoadUnitType loadUnitType,
     @NotNull
     @FutureOrPresent
     @Schema(description = "Pickup date", example = "2026-06-01")

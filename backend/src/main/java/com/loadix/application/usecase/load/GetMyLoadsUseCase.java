@@ -69,6 +69,8 @@ public class GetMyLoadsUseCase implements GetMyLoadsPort {
                 new LoadResponse.LocationResponse(load.destinationAddress(), load.destinationCity(), load.destinationPostalCode()),
                 load.cargoType(),
                 load.weightKg(),
+                load.loadQuantity(),
+                load.loadUnitType(),
                 load.pickupDate(),
                 load.basePriceAmount(),
                 load.notes(),
