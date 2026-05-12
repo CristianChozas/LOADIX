@@ -1,5 +1,9 @@
 package com.loadix.domain.valueobject;
 
 public enum LoadStatus {
-    PUBLISHED
+    PUBLISHED,
+    RESERVED,
+    IN_TRANSIT,
+    DELIVERED,
+    CANCELLED
 }

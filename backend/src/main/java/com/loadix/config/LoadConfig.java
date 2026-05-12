@@ -7,6 +7,7 @@ import com.loadix.application.port.in.CreateLoadPort;
 import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
 import com.loadix.application.port.in.UpdateMyLoadPort;
+import com.loadix.application.port.in.UpdateMyLoadStatusPort;
 import com.loadix.application.port.out.LoadPort;
 import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.application.port.out.WarehouseProfilePort;
@@ -14,6 +15,7 @@ import com.loadix.application.usecase.load.CreateLoadUseCase;
 import com.loadix.application.usecase.load.GetAvailableLoadsUseCase;
 import com.loadix.application.usecase.load.GetMyLoadsUseCase;
 import com.loadix.application.usecase.load.UpdateMyLoadUseCase;
+import com.loadix.application.usecase.load.UpdateMyLoadStatusUseCase;
 
 @Configuration
 public class LoadConfig {
@@ -49,5 +51,13 @@ public class LoadConfig {
         LoadPort loadPort
     ) {
         return new UpdateMyLoadUseCase(userAccountPort, loadPort);
+    }
+
+    @Bean
+    public UpdateMyLoadStatusPort updateMyLoadStatusPort(
+        UserAccountPort userAccountPort,
+        LoadPort loadPort
+    ) {
+        return new UpdateMyLoadStatusUseCase(userAccountPort, loadPort);
     }
 }

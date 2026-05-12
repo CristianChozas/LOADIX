@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.Authentication;
 
 import com.loadix.application.dto.request.CreateLoadRequest;
+import com.loadix.application.dto.request.UpdateLoadStatusRequest;
 import com.loadix.application.dto.request.UpdateLoadRequest;
 import com.loadix.application.dto.response.LoadResponse;
 import com.loadix.application.dto.response.MyLoadsPageResponse;
@@ -22,6 +24,7 @@ import com.loadix.application.port.in.CreateLoadPort;
 import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
 import com.loadix.application.port.in.UpdateMyLoadPort;
+import com.loadix.application.port.in.UpdateMyLoadStatusPort;
 import com.loadix.domain.model.AvailableLoadsFilters;
 import com.loadix.domain.valueobject.CargoType;
 import com.loadix.domain.exception.InvalidCredentialsException;
@@ -44,17 +47,20 @@ public class LoadController {
     private final GetMyLoadsPort getMyLoadsPort;
     private final GetAvailableLoadsPort getAvailableLoadsPort;
     private final UpdateMyLoadPort updateMyLoadPort;
+    private final UpdateMyLoadStatusPort updateMyLoadStatusPort;
 
     public LoadController(
         CreateLoadPort createLoadPort,
         GetMyLoadsPort getMyLoadsPort,
         GetAvailableLoadsPort getAvailableLoadsPort,
-        UpdateMyLoadPort updateMyLoadPort
+        UpdateMyLoadPort updateMyLoadPort,
+        UpdateMyLoadStatusPort updateMyLoadStatusPort
     ) {
         this.createLoadPort = createLoadPort;
         this.getMyLoadsPort = getMyLoadsPort;
         this.getAvailableLoadsPort = getAvailableLoadsPort;
         this.updateMyLoadPort = updateMyLoadPort;
+        this.updateMyLoadStatusPort = updateMyLoadStatusPort;
     }
 
     @PostMapping
@@ -170,5 +176,25 @@ public class LoadController {
         }
 
         return updateMyLoadPort.execute(authentication.getName(), loadId, request);
+    }
+
+    @PatchMapping("/{loadId}/status")
+    @Operation(summary = "Update the operational status of my load")
+    @ApiResponse(responseCode = "200", description = "Load status updated successfully",
+        content = @Content(schema = @Schema(implementation = LoadResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid status transition")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    @ApiResponse(responseCode = "403", description = "Forbidden for current user")
+    @ApiResponse(responseCode = "404", description = "Load not found")
+    public LoadResponse updateMyLoadStatus(
+        @Parameter(hidden = true) Authentication authentication,
+        @PathVariable java.util.UUID loadId,
+        @Valid @RequestBody UpdateLoadStatusRequest request
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        return updateMyLoadStatusPort.execute(authentication.getName(), loadId, request);
     }
 }

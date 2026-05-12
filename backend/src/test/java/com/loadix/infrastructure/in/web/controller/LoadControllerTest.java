@@ -2,6 +2,7 @@ package com.loadix.infrastructure.in.web.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -216,6 +217,56 @@ class LoadControllerTest extends IntegrationTestContainers {
                 .cookie(warehouseCookie)
                 .param("page", "0")
                 .param("size", "10"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void updatesLoadStatusFromPublishedToReserved() throws Exception {
+        Cookie authCookie = registerAndLoginWarehouseUser("load-status-update@loadix.test");
+        createWarehouseProfile(authCookie);
+
+        MvcResult created = publishLoad(authCookie, "Madrid", "2099-08-10", 990.0);
+        String loadId = objectMapper.readTree(created.getResponse().getContentAsString()).get("id").asText();
+
+        mockMvc.perform(patch("/api/v1/loads/{id}/status", loadId)
+                .cookie(authCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"status\":\"RESERVED\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("RESERVED"));
+    }
+
+    @Test
+    void rejectsInvalidLoadStatusTransition() throws Exception {
+        Cookie authCookie = registerAndLoginWarehouseUser("load-status-invalid@loadix.test");
+        createWarehouseProfile(authCookie);
+
+        MvcResult created = publishLoad(authCookie, "Madrid", "2099-09-10", 990.0);
+        String loadId = objectMapper.readTree(created.getResponse().getContentAsString()).get("id").asText();
+
+        mockMvc.perform(patch("/api/v1/loads/{id}/status", loadId)
+                .cookie(authCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"status\":\"DELIVERED\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rejectsLoadStatusUpdateForCarrierRole() throws Exception {
+        Cookie warehouseCookie = registerAndLoginWarehouseUser("load-status-owner@loadix.test");
+        createWarehouseProfile(warehouseCookie);
+        MvcResult created = publishLoad(warehouseCookie, "Madrid", "2099-10-10", 990.0);
+        String loadId = objectMapper.readTree(created.getResponse().getContentAsString()).get("id").asText();
+
+        Cookie carrierCookie = registerAndLoginCarrierUser("load-status-carrier@loadix.test");
+
+        mockMvc.perform(patch("/api/v1/loads/{id}/status", loadId)
+                .cookie(carrierCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"status\":\"RESERVED\"}"))
             .andExpect(status().isForbidden());
     }
 
