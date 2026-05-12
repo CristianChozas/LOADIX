@@ -1,7 +1,9 @@
 package com.loadix.infrastructure.persistence.adapter;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,6 +18,7 @@ import com.loadix.application.port.out.LoadPort;
 import com.loadix.domain.model.AvailableLoadsFilters;
 import com.loadix.domain.model.LoadPageResult;
 import com.loadix.domain.model.LoadPublication;
+import com.loadix.domain.model.LoadStatusCount;
 import com.loadix.domain.model.PersistedLoadPublication;
 import com.loadix.domain.valueobject.CargoType;
 import com.loadix.domain.valueobject.LoadStatus;
@@ -116,6 +119,35 @@ public class LoadPersistenceAdapter implements LoadPort {
     @Override
     public Optional<PersistedLoadPublication> findById(UUID loadId) {
         return loadJpaRepository.findById(loadId).map(LoadJpaEntity::toDomain);
+    }
+
+    @Override
+    public long countCreatedByWarehouseUserIdBetween(UUID warehouseUserId, Instant fromInclusive, Instant toExclusive) {
+        return loadJpaRepository.countByWarehouseUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+            warehouseUserId,
+            fromInclusive,
+            toExclusive
+        );
+    }
+
+    @Override
+    public List<PersistedLoadPublication> findCreatedByWarehouseUserIdBetween(
+        UUID warehouseUserId,
+        Instant fromInclusive,
+        Instant toExclusive
+    ) {
+        return loadJpaRepository.findByWarehouseUserIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+            warehouseUserId,
+            fromInclusive,
+            toExclusive
+        ).stream().map(LoadJpaEntity::toDomain).toList();
+    }
+
+    @Override
+    public List<LoadStatusCount> countByWarehouseUserIdGroupedByStatus(UUID warehouseUserId) {
+        return loadJpaRepository.countByWarehouseUserIdGroupedByStatus(warehouseUserId).stream()
+            .map(row -> new LoadStatusCount(LoadStatus.valueOf(row.getStatus()), row.getTotal()))
+            .toList();
     }
 
     private Specification<LoadJpaEntity> byWarehouseUserId(UUID warehouseUserId) {

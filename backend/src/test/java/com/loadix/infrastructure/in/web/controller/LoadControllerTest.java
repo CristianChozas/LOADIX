@@ -270,6 +270,34 @@ class LoadControllerTest extends IntegrationTestContainers {
             .andExpect(status().isForbidden());
     }
 
+    @Test
+    void returnsWarehouseDashboardMetricsWithWeeklyAndStatusDistribution() throws Exception {
+        Cookie authCookie = registerAndLoginWarehouseUser("load-dashboard@loadix.test");
+        createWarehouseProfile(authCookie);
+
+        publishLoad(authCookie, "Madrid", "2099-12-10", 850.0);
+        MvcResult secondLoad = publishLoad(authCookie, "Sevilla", "2099-12-12", 910.0);
+        String secondLoadId = objectMapper.readTree(secondLoad.getResponse().getContentAsString()).get("id").asText();
+
+        mockMvc.perform(patch("/api/v1/loads/{id}/status", secondLoadId)
+                .cookie(authCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"status\":\"RESERVED\"}"))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/loads/dashboard/warehouse")
+                .cookie(authCookie))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.monthlyLoads").isNumber())
+            .andExpect(jsonPath("$.weeklyActivity.length()").value(7))
+            .andExpect(jsonPath("$.statusDistribution.length()").value(5))
+            .andExpect(jsonPath("$.statusDistribution[0].status").value("PUBLISHED"))
+            .andExpect(jsonPath("$.statusDistribution[1].status").value("RESERVED"))
+            .andExpect(jsonPath("$.statusDistribution[0].count").value(1))
+            .andExpect(jsonPath("$.statusDistribution[1].count").value(1));
+    }
+
     private void createWarehouseProfile(Cookie authCookie) throws Exception {
         mockMvc.perform(post("/api/v1/profiles/warehouse")
                 .cookie(authCookie)
