@@ -7,10 +7,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.loadix.domain.model.AvailableLoadsFilters;
+import com.loadix.domain.model.CargoTypeCount;
 import com.loadix.domain.model.LoadStatusCount;
 import com.loadix.domain.model.LoadPublication;
 import com.loadix.domain.model.LoadPageResult;
 import com.loadix.domain.model.PersistedLoadPublication;
+import com.loadix.domain.valueobject.LoadStatus;
 
 public interface LoadPort {
 
@@ -41,4 +43,10 @@ public interface LoadPort {
     List<PersistedLoadPublication> findCreatedByWarehouseUserIdBetween(UUID warehouseUserId, Instant fromInclusive, Instant toExclusive);
 
     List<LoadStatusCount> countByWarehouseUserIdGroupedByStatus(UUID warehouseUserId);
+
+    long countByStatus(LoadStatus status);
+
+    List<PersistedLoadPublication> findByStatusAndCreatedAtBetween(LoadStatus status, Instant fromInclusive, Instant toExclusive);
+
+    List<CargoTypeCount> countByStatusGroupedByCargoType(LoadStatus status);
 }

@@ -298,6 +298,47 @@ class LoadControllerTest extends IntegrationTestContainers {
             .andExpect(jsonPath("$.statusDistribution[1].count").value(1));
     }
 
+    @Test
+    void returnsCarrierDashboardMetricsWithWeeklyAndCargoTypeDistribution() throws Exception {
+        Cookie carrierCookie = registerAndLoginCarrierUser("carrier-dashboard@loadix.test");
+
+        MvcResult baselineDashboard = mockMvc.perform(get("/api/v1/loads/dashboard/carrier")
+                .cookie(carrierCookie))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        JsonNode baselinePayload = objectMapper.readTree(baselineDashboard.getResponse().getContentAsString());
+        long baselineAvailableLoads = baselinePayload.get("availableLoads").asLong();
+        long baselinePalletizedCount = baselinePayload.get("cargoTypeDistribution").get(0).get("count").asLong();
+        long baselineRefrigeratedCount = baselinePayload.get("cargoTypeDistribution").get(2).get("count").asLong();
+
+        Cookie warehouseCookie = registerAndLoginWarehouseUser("carrier-dashboard-warehouse@loadix.test");
+        createWarehouseProfile(warehouseCookie);
+
+        publishLoad(warehouseCookie, "Madrid", "Valencia", "PALLETIZED", "2099-12-10", 10, 1200.5, 850.0);
+        publishLoad(warehouseCookie, "Sevilla", "Bilbao", "REFRIGERATED", "2099-12-12", 8, 950.0, 910.0);
+
+        mockMvc.perform(get("/api/v1/loads/dashboard/carrier")
+                .cookie(carrierCookie))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.availableLoads").value(baselineAvailableLoads + 2))
+            .andExpect(jsonPath("$.weeklyActivity.length()").value(7))
+            .andExpect(jsonPath("$.cargoTypeDistribution.length()").value(9))
+            .andExpect(jsonPath("$.cargoTypeDistribution[0].cargoType").value("PALLETIZED"))
+            .andExpect(jsonPath("$.cargoTypeDistribution[0].count").value(baselinePalletizedCount + 1))
+            .andExpect(jsonPath("$.cargoTypeDistribution[2].cargoType").value("REFRIGERATED"))
+            .andExpect(jsonPath("$.cargoTypeDistribution[2].count").value(baselineRefrigeratedCount + 1));
+    }
+
+    @Test
+    void rejectsCarrierDashboardForWarehouseRole() throws Exception {
+        Cookie authCookie = registerAndLoginWarehouseUser("carrier-dashboard-forbidden@loadix.test");
+
+        mockMvc.perform(get("/api/v1/loads/dashboard/carrier")
+                .cookie(authCookie))
+            .andExpect(status().isForbidden());
+    }
+
     private void createWarehouseProfile(Cookie authCookie) throws Exception {
         mockMvc.perform(post("/api/v1/profiles/warehouse")
                 .cookie(authCookie)

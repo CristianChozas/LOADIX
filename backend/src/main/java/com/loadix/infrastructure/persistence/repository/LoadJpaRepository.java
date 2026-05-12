@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.loadix.infrastructure.persistence.entity.LoadJpaEntity;
+import com.loadix.infrastructure.persistence.repository.projection.CargoTypeCountProjection;
 import com.loadix.infrastructure.persistence.repository.projection.LoadStatusCountProjection;
 
 public interface LoadJpaRepository extends JpaRepository<LoadJpaEntity, UUID>, JpaSpecificationExecutor<LoadJpaEntity> {
@@ -26,6 +27,14 @@ public interface LoadJpaRepository extends JpaRepository<LoadJpaEntity, UUID>, J
         Instant toExclusive
     );
 
+    long countByStatus(String status);
+
+    List<LoadJpaEntity> findByStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+        String status,
+        Instant fromInclusive,
+        Instant toExclusive
+    );
+
     @Query("""
         select l.status as status, count(l) as total
         from LoadJpaEntity l
@@ -33,4 +42,12 @@ public interface LoadJpaRepository extends JpaRepository<LoadJpaEntity, UUID>, J
         group by l.status
     """)
     List<LoadStatusCountProjection> countByWarehouseUserIdGroupedByStatus(@Param("warehouseUserId") UUID warehouseUserId);
+
+    @Query("""
+        select l.cargoType as cargoType, count(l) as total
+        from LoadJpaEntity l
+        where l.status = :status
+        group by l.cargoType
+    """)
+    List<CargoTypeCountProjection> countByStatusGroupedByCargoType(@Param("status") String status);
 }

@@ -18,11 +18,13 @@ import org.springframework.security.core.Authentication;
 import com.loadix.application.dto.request.CreateLoadRequest;
 import com.loadix.application.dto.request.UpdateLoadStatusRequest;
 import com.loadix.application.dto.request.UpdateLoadRequest;
+import com.loadix.application.dto.response.CarrierDashboardResponse;
 import com.loadix.application.dto.response.LoadResponse;
 import com.loadix.application.dto.response.MyLoadsPageResponse;
 import com.loadix.application.dto.response.WarehouseDashboardResponse;
 import com.loadix.application.port.in.CreateLoadPort;
 import com.loadix.application.port.in.GetAvailableLoadsPort;
+import com.loadix.application.port.in.GetCarrierDashboardMetricsPort;
 import com.loadix.application.port.in.GetWarehouseDashboardMetricsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
 import com.loadix.application.port.in.UpdateMyLoadPort;
@@ -48,6 +50,7 @@ public class LoadController {
     private final CreateLoadPort createLoadPort;
     private final GetMyLoadsPort getMyLoadsPort;
     private final GetWarehouseDashboardMetricsPort getWarehouseDashboardMetricsPort;
+    private final GetCarrierDashboardMetricsPort getCarrierDashboardMetricsPort;
     private final GetAvailableLoadsPort getAvailableLoadsPort;
     private final UpdateMyLoadPort updateMyLoadPort;
     private final UpdateMyLoadStatusPort updateMyLoadStatusPort;
@@ -56,6 +59,7 @@ public class LoadController {
         CreateLoadPort createLoadPort,
         GetMyLoadsPort getMyLoadsPort,
         GetWarehouseDashboardMetricsPort getWarehouseDashboardMetricsPort,
+        GetCarrierDashboardMetricsPort getCarrierDashboardMetricsPort,
         GetAvailableLoadsPort getAvailableLoadsPort,
         UpdateMyLoadPort updateMyLoadPort,
         UpdateMyLoadStatusPort updateMyLoadStatusPort
@@ -63,6 +67,7 @@ public class LoadController {
         this.createLoadPort = createLoadPort;
         this.getMyLoadsPort = getMyLoadsPort;
         this.getWarehouseDashboardMetricsPort = getWarehouseDashboardMetricsPort;
+        this.getCarrierDashboardMetricsPort = getCarrierDashboardMetricsPort;
         this.getAvailableLoadsPort = getAvailableLoadsPort;
         this.updateMyLoadPort = updateMyLoadPort;
         this.updateMyLoadStatusPort = updateMyLoadStatusPort;
@@ -131,6 +136,22 @@ public class LoadController {
         }
 
         return getWarehouseDashboardMetricsPort.execute(authentication.getName());
+    }
+
+    @GetMapping("/dashboard/carrier")
+    @Operation(summary = "Get carrier dashboard metrics")
+    @ApiResponse(responseCode = "200", description = "Dashboard metrics retrieved successfully",
+        content = @Content(schema = @Schema(implementation = CarrierDashboardResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    @ApiResponse(responseCode = "403", description = "Forbidden for current user")
+    public CarrierDashboardResponse getCarrierDashboardMetrics(
+        @Parameter(hidden = true) Authentication authentication
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        return getCarrierDashboardMetricsPort.execute(authentication.getName());
     }
 
     @GetMapping("/available")

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import com.loadix.application.port.out.LoadPort;
 import com.loadix.domain.model.AvailableLoadsFilters;
+import com.loadix.domain.model.CargoTypeCount;
 import com.loadix.domain.model.LoadPageResult;
 import com.loadix.domain.model.LoadPublication;
 import com.loadix.domain.model.LoadStatusCount;
@@ -147,6 +148,31 @@ public class LoadPersistenceAdapter implements LoadPort {
     public List<LoadStatusCount> countByWarehouseUserIdGroupedByStatus(UUID warehouseUserId) {
         return loadJpaRepository.countByWarehouseUserIdGroupedByStatus(warehouseUserId).stream()
             .map(row -> new LoadStatusCount(LoadStatus.valueOf(row.getStatus()), row.getTotal()))
+            .toList();
+    }
+
+    @Override
+    public long countByStatus(LoadStatus status) {
+        return loadJpaRepository.countByStatus(status.name());
+    }
+
+    @Override
+    public List<PersistedLoadPublication> findByStatusAndCreatedAtBetween(
+        LoadStatus status,
+        Instant fromInclusive,
+        Instant toExclusive
+    ) {
+        return loadJpaRepository.findByStatusAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
+            status.name(),
+            fromInclusive,
+            toExclusive
+        ).stream().map(LoadJpaEntity::toDomain).toList();
+    }
+
+    @Override
+    public List<CargoTypeCount> countByStatusGroupedByCargoType(LoadStatus status) {
+        return loadJpaRepository.countByStatusGroupedByCargoType(status.name()).stream()
+            .map(row -> new CargoTypeCount(CargoType.valueOf(row.getCargoType()), row.getTotal()))
             .toList();
     }
 
