@@ -1,6 +1,5 @@
 # LOADIX
 
-Reconstruccion de LOADIX en un repositorio nuevo para el TFG, manteniendo el producto por bloques y con historial limpio.
 
 ## Estado actual
 
