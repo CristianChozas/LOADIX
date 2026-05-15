@@ -58,11 +58,6 @@ El repositorio contiene una version funcional del producto con:
   - `POST /api/v1/loads/{loadId}/reserve`
 - OpenAPI disponible en `/v3/api-docs` y Swagger UI en `/swagger-ui/index.html`
 
-## Limitaciones actuales
-
-- La subida de documentos del perfil de transportista todavia no esta conectada al backend.
-- La tarjeta de facturacion del dashboard de transportista muestra datos provisionales, no datos reales de backend.
-- El frontend incluye dependencias y scripts de Prisma, pero en el estado actual la aplicacion web consume la API de Spring Boot; Prisma no forma parte del flujo principal documentado aqui.
 
 ## Estructura del repo
 
