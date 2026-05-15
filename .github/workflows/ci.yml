@@ -16,7 +16,6 @@ jobs:
       - name: Verify required files and directories
         run: |
           test -f README.md
-          test -f AGENTS.md
           test -f documents/TICKETS_LOADIX.md
           test -f docker-compose.yml
           test -d backend

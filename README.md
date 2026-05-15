@@ -1,84 +1,151 @@
 # LOADIX
 
-Plataforma B2B para la gestión y contratación de cargas entre almacenes y transportistas.
+Reconstruccion de LOADIX en un repositorio nuevo para el TFG, manteniendo el producto por bloques y con historial limpio.
 
-## Stack técnico
+## Estado actual
 
-- Java 17
-- Spring Boot
-- Maven
-- PostgreSQL
-- Redis
-- Flyway
-- Testcontainers
-- Docker
+El repositorio contiene una version funcional del producto con:
 
-## Entorno
+- `frontend/`: aplicacion Next.js 16 con landing, autenticacion y dashboards por rol.
+- `backend/`: API Spring Boot 3.4 con autenticacion JWT por cookie, perfiles, cargas y documentacion OpenAPI.
+- `docker-compose.yml`: PostgreSQL 16 y Redis 7 para entorno local.
+- `.github/workflows/ci.yml`: comprobaciones basicas de estructura del repo y validacion de Docker Compose.
 
-El backend puede trabajar de dos formas:
+## Stack actual
 
-- local con `docker compose` usando PostgreSQL y Redis locales
-- entorno real usando `backend/.env` con servicios gestionados
+- Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS 4, React Hook Form, Zod
+- Backend: Java 17, Spring Boot 3.4, Spring Web, Spring Security, Spring Data JPA, Redis, Flyway, OpenAPI
+- Base de datos e infraestructura: PostgreSQL, Redis, Docker Compose
+- Testing: JUnit 5, Spring Boot Test, Spring Security Test, Testcontainers
+- Pago: integracion backend con Stripe para la reserva de cargas
 
-Variables recomendadas para entorno real:
+## Funcionalidad implementada
 
-- `DATABASE_URL`: URL de PostgreSQL de Supabase. Se aceptan formatos `postgresql://...`, `postgres://...` o `jdbc:postgresql://...`
-- `DATABASE_USERNAME` y `DATABASE_PASSWORD`: opcionales si la URL no incluye credenciales
-- `REDIS_URL`: URL estándar de Redis (`redis://` o `rediss://`)
-- `REDIS_USERNAME` y `REDIS_PASSWORD`: opcionales según el proveedor
-- `REDIS_SSL=true`: activar si el proveedor exige TLS
+### Frontend
 
-Nota: el backend usa cliente Redis TCP de Spring. Si tu proveedor solo expone credenciales REST y no una URL estándar de Redis, esa integración no servirá tal cual.
+- Landing publica en `/`
+- Registro en `/register`
+- Login en `/login`
+- Dashboard de almacen en `/dashboard/warehouse`
+- Perfil de almacen en `/dashboard/warehouse/profile`
+- Publicacion de cargas en `/dashboard/warehouse/new-load`
+- Listado y edicion de cargas propias en `/dashboard/warehouse/loads`
+- Dashboard de transportista en `/dashboard/carrier`
+- Perfil de transportista en `/dashboard/carrier/profile`
+- Marketplace de cargas en `/dashboard/carrier/marketplace`
+- Listado de cargas reservadas o en curso en `/dashboard/carrier/trips`
 
-## Arquitectura
+### Backend
 
-Se aplica una arquitectura orientada a Clean Architecture, con una base preparada para crecer por módulos y mantener el backend desacoplado.
+- Health check en `/api/v1/health`
+- Auth:
+  - `POST /api/v1/auth/register`
+  - `POST /api/v1/auth/login`
+  - `GET /api/v1/auth/me`
+  - `PATCH /api/v1/auth/email`
+  - `POST /api/v1/auth/logout`
+- Profiles:
+  - `POST|GET|PUT /api/v1/profiles/warehouse`
+  - `POST|GET|PUT /api/v1/profiles/carrier`
+- Loads:
+  - `POST /api/v1/loads`
+  - `GET /api/v1/loads/mine`
+  - `GET /api/v1/loads/dashboard/warehouse`
+  - `GET /api/v1/loads/dashboard/carrier`
+  - `GET /api/v1/loads/carrier/mine`
+  - `GET /api/v1/loads/available`
+  - `PUT /api/v1/loads/{loadId}`
+  - `PATCH /api/v1/loads/{loadId}/status`
+  - `POST /api/v1/loads/{loadId}/reserve`
+- OpenAPI disponible en `/v3/api-docs` y Swagger UI en `/swagger-ui/index.html`
 
-## Estructura del backend
+## Limitaciones actuales
+
+- La subida de documentos del perfil de transportista todavia no esta conectada al backend.
+- La tarjeta de facturacion del dashboard de transportista muestra datos provisionales, no datos reales de backend.
+- El frontend incluye dependencias y scripts de Prisma, pero en el estado actual la aplicacion web consume la API de Spring Boot; Prisma no forma parte del flujo principal documentado aqui.
+
+## Estructura del repo
 
 ```text
-backend/
-├─ .mvn/
-│ └─ wrapper/
-├─ src/
-│ ├─ main/
-│ │ ├─ java/
-│ │ │ └─ com/
-│ │ │ └─ loadix/
-│ │ │ ├─ application/
-│ │ │ │ └─ exception/
-│ │ │ ├─ domain/
-│ │ │ └─ infrastructure/
-│ │ │ ├─ config/
-│ │ │ ├─ http/
-│ │ │ │ └─ filter/
-│ │ │ ├─ persistence/
-│ │ │ │ ├─ adapter/
-│ │ │ │ ├─ entity/
-│ │ │ │ └─ repository/
-│ │ │ ├─ security/
-│ │ │ └─ startup/
-│ │ └─ resources/
-│ │ └─ db/
-│ │ └─ migration/
-│ └─ test/
-│ └─ java/
-│ └─ com/
-│ └─ loadix/
-│ ├─ infrastructure/
-│ │ ├─ config/
-│ │ ├─ http/
-│ │ │ └─ filter/
-│ │ └─ security/
-│ └─ support/
-└─ target/
-├─ classes/
-├─ test-classes/
-├─ surefire-reports/
-└─ maven-status/
+.
+├─ backend/
+├─ frontend/
+├─ documents/
+├─ .github/workflows/
+├─ docker-compose.yml
+└─ README.md
 ```
 
-## Aviso legal
+## Arranque en local
 
-El frontend del proyecto no se publica porque forma parte de un activo comercial no abierto al público.
-Todo el código de este repositorio es propiedad intelectual y no está autorizado para su uso, copia, redistribución ni explotación comercial sin permiso expreso.
+### 1. Infraestructura
+
+```bash
+docker compose up -d
+```
+
+Servicios locales por defecto:
+
+- PostgreSQL: `localhost:5434`
+- Redis: `localhost:6379`
+
+### 2. Backend
+
+Variables disponibles en `backend/.env.example`:
+
+- `DATABASE_URL`
+- `DATABASE_USERNAME`
+- `DATABASE_PASSWORD`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+- `JWT_SECRET`
+- `SUPABASE_CARRIER_DOCS_BUCKET`
+- `STRIPE_SECRET_KEY`
+
+Ejecucion:
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+El backend arranca por defecto en `http://localhost:8082`.
+
+### 3. Frontend
+
+Instalacion y arranque:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+La aplicacion arranca por defecto en `http://localhost:3000`.
+
+El frontend consume la API en `http://localhost:8082/api/v1` por defecto. Si necesitas otra URL, el codigo soporta `NEXT_PUBLIC_API_URL`.
+
+Variables incluidas en `frontend/.env.example`:
+
+- `DATABASE_URL`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+- `JWT_SECRET`
+- `NODE_ENV`
+
+## Validacion ejecutada
+
+Se ha comprobado el estado actual del repo con:
+
+- `docker compose config`
+- `frontend`: `npm run lint` y `npm run build`
+- `backend`: `./mvnw compile` y `./mvnw test`
+
+Todos esos comandos han pasado en el estado actual documentado en este README.
