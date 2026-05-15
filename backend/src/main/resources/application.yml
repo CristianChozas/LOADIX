@@ -1,6 +1,10 @@
 spring:
   application:
     name: loadix-backend-api
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:backend/.env[.properties]
   profiles:
     default: dev
   jpa:
@@ -22,3 +26,7 @@ loadix:
     public-window: ${RATE_LIMIT_PUBLIC_WINDOW:PT1M}
     auth-capacity: ${RATE_LIMIT_AUTH_CAPACITY:10}
     auth-window: ${RATE_LIMIT_AUTH_WINDOW:PT15M}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    default-test-payment-method: ${STRIPE_DEFAULT_TEST_PAYMENT_METHOD:pm_card_visa}
+    currency: ${STRIPE_CURRENCY:eur}

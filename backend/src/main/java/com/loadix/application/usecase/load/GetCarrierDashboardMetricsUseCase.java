@@ -16,11 +16,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.loadix.application.dto.response.CarrierDashboardResponse;
 import com.loadix.application.port.in.GetCarrierDashboardMetricsPort;
+import com.loadix.application.port.out.LoadPaymentPort;
 import com.loadix.application.port.out.LoadPort;
 import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.domain.exception.UserNotFoundException;
 import com.loadix.domain.valueobject.CargoType;
 import com.loadix.domain.valueobject.LoadStatus;
+import com.loadix.domain.valueobject.PaymentStatus;
 import com.loadix.domain.valueobject.UserRole;
 
 public class GetCarrierDashboardMetricsUseCase implements GetCarrierDashboardMetricsPort {
@@ -37,10 +39,12 @@ public class GetCarrierDashboardMetricsUseCase implements GetCarrierDashboardMet
 
     private final UserAccountPort userAccountPort;
     private final LoadPort loadPort;
+    private final LoadPaymentPort loadPaymentPort;
 
-    public GetCarrierDashboardMetricsUseCase(UserAccountPort userAccountPort, LoadPort loadPort) {
+    public GetCarrierDashboardMetricsUseCase(UserAccountPort userAccountPort, LoadPort loadPort, LoadPaymentPort loadPaymentPort) {
         this.userAccountPort = userAccountPort;
         this.loadPort = loadPort;
+        this.loadPaymentPort = loadPaymentPort;
     }
 
     @Override
@@ -52,6 +56,7 @@ public class GetCarrierDashboardMetricsUseCase implements GetCarrierDashboardMet
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only carrier users can view dashboard metrics");
         }
 
+        long reservedLoads = loadPaymentPort.countByCarrierUserIdAndStatus(user.id(), PaymentStatus.CONFIRMED);
         long availableLoads = loadPort.countByStatus(LoadStatus.PUBLISHED);
 
         LocalDate currentDate = LocalDate.now(ZoneOffset.UTC);
@@ -90,7 +95,7 @@ public class GetCarrierDashboardMetricsUseCase implements GetCarrierDashboardMet
             .map(cargoType -> new CarrierDashboardResponse.CargoTypeDistributionItem(cargoType, cargoTypeCounts.get(cargoType)))
             .toList();
 
-        return new CarrierDashboardResponse(availableLoads, weeklyActivity, cargoTypeDistribution);
+        return new CarrierDashboardResponse(reservedLoads, availableLoads, weeklyActivity, cargoTypeDistribution);
     }
 
     private CarrierDashboardResponse.WeeklyActivityPoint buildWeeklyPoint(

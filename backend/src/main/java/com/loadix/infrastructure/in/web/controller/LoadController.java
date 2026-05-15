@@ -27,6 +27,7 @@ import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.in.GetCarrierDashboardMetricsPort;
 import com.loadix.application.port.in.GetWarehouseDashboardMetricsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
+import com.loadix.application.port.in.ReserveLoadPort;
 import com.loadix.application.port.in.UpdateMyLoadPort;
 import com.loadix.application.port.in.UpdateMyLoadStatusPort;
 import com.loadix.domain.model.AvailableLoadsFilters;
@@ -54,6 +55,7 @@ public class LoadController {
     private final GetAvailableLoadsPort getAvailableLoadsPort;
     private final UpdateMyLoadPort updateMyLoadPort;
     private final UpdateMyLoadStatusPort updateMyLoadStatusPort;
+    private final ReserveLoadPort reserveLoadPort;
 
     public LoadController(
         CreateLoadPort createLoadPort,
@@ -62,7 +64,8 @@ public class LoadController {
         GetCarrierDashboardMetricsPort getCarrierDashboardMetricsPort,
         GetAvailableLoadsPort getAvailableLoadsPort,
         UpdateMyLoadPort updateMyLoadPort,
-        UpdateMyLoadStatusPort updateMyLoadStatusPort
+        UpdateMyLoadStatusPort updateMyLoadStatusPort,
+        ReserveLoadPort reserveLoadPort
     ) {
         this.createLoadPort = createLoadPort;
         this.getMyLoadsPort = getMyLoadsPort;
@@ -71,6 +74,7 @@ public class LoadController {
         this.getAvailableLoadsPort = getAvailableLoadsPort;
         this.updateMyLoadPort = updateMyLoadPort;
         this.updateMyLoadStatusPort = updateMyLoadStatusPort;
+        this.reserveLoadPort = reserveLoadPort;
     }
 
     @PostMapping
@@ -238,5 +242,25 @@ public class LoadController {
         }
 
         return updateMyLoadStatusPort.execute(authentication.getName(), loadId, request);
+    }
+
+    @PostMapping("/{loadId}/reserve")
+    @Operation(summary = "Reserve an available load with Stripe payment")
+    @ApiResponse(responseCode = "200", description = "Load reserved successfully",
+        content = @Content(schema = @Schema(implementation = LoadResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid reservation state or payment failure")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    @ApiResponse(responseCode = "403", description = "Forbidden for current user")
+    @ApiResponse(responseCode = "404", description = "Load not found")
+    @ApiResponse(responseCode = "502", description = "Payment provider unavailable")
+    public LoadResponse reserveLoad(
+        @Parameter(hidden = true) Authentication authentication,
+        @PathVariable java.util.UUID loadId
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        return reserveLoadPort.execute(authentication.getName(), loadId);
     }
 }

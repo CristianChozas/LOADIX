@@ -19,28 +19,29 @@ public class DatabaseConfig {
     public DataSource dataSource(Environment environment) {
         HikariDataSource dataSource = new HikariDataSource();
 
-        String explicitUrl = firstNonBlank(
-                environment.getProperty("spring.datasource.url"),
-                environment.getProperty("JDBC_DATABASE_URL"),
-                environment.getProperty("DATABASE_URL")
-        );
+        boolean testProfile = isTestProfile(environment);
+        String explicitUrl = testProfile
+                ? firstNonBlank(
+                    environment.getProperty("spring.datasource.url"),
+                    environment.getProperty("DATABASE_URL")
+                )
+                : environment.getProperty("DATABASE_URL");
 
         if (hasText(explicitUrl)) {
             String jdbcUrl = normalizeJdbcUrl(explicitUrl);
             validateJdbcUrl(jdbcUrl);
+            validateSupabaseRuntimeDatabase(jdbcUrl, testProfile);
 
             dataSource.setDriverClassName("org.postgresql.Driver");
             dataSource.setJdbcUrl(jdbcUrl);
 
             String username = firstNonBlank(
-                    environment.getProperty("spring.datasource.username"),
-                    environment.getProperty("DATABASE_USERNAME"),
-                    environment.getProperty("SPRING_DATASOURCE_USERNAME")
+                    testProfile ? environment.getProperty("spring.datasource.username") : null,
+                    environment.getProperty("DATABASE_USERNAME")
             );
             String password = firstNonBlank(
-                    environment.getProperty("spring.datasource.password"),
-                    environment.getProperty("DATABASE_PASSWORD"),
-                    environment.getProperty("SPRING_DATASOURCE_PASSWORD")
+                    testProfile ? environment.getProperty("spring.datasource.password") : null,
+                    environment.getProperty("DATABASE_PASSWORD")
             );
 
             if (hasText(username)) {
@@ -50,26 +51,15 @@ public class DatabaseConfig {
                 dataSource.setPassword(password);
             }
 
-            log.info("database_config mode=explicit jdbc_url={} username_present={} password_present={}",
-                    sanitizeJdbcUrl(jdbcUrl), hasText(username), hasText(password));
+            log.info("database_config mode=explicit profile_test={} jdbc_url={} username_present={} password_present={}",
+                    testProfile, sanitizeJdbcUrl(jdbcUrl), hasText(username), hasText(password));
 
             return dataSource;
         }
 
-        String fallbackJdbcUrl = "jdbc:postgresql://%s:%s/%s".formatted(
-                environment.getProperty("POSTGRES_HOST", "localhost"),
-                environment.getProperty("POSTGRES_PORT", "5434"),
-                environment.getProperty("POSTGRES_DB", "loadix")
+        throw new IllegalStateException(
+                "No database URL configured. Set DATABASE_URL to the Supabase PostgreSQL JDBC URL."
         );
-
-        dataSource.setDriverClassName("org.postgresql.Driver");
-        dataSource.setJdbcUrl(fallbackJdbcUrl);
-        dataSource.setUsername(environment.getProperty("POSTGRES_USER", "loadix"));
-        dataSource.setPassword(environment.getProperty("POSTGRES_PASSWORD", "loadix"));
-
-        log.info("database_config mode=fallback jdbc_url={}", sanitizeJdbcUrl(fallbackJdbcUrl));
-
-        return dataSource;
     }
 
     private String normalizeJdbcUrl(String rawUrl) {
@@ -90,7 +80,23 @@ public class DatabaseConfig {
     private void validateJdbcUrl(String jdbcUrl) {
         if (!jdbcUrl.startsWith("jdbc:postgresql://")) {
             throw new IllegalStateException(
-                    "Invalid JDBC_DATABASE_URL/DATABASE_URL. Expected a PostgreSQL URL like jdbc:postgresql://host:port/database or postgresql://host:port/database"
+                    "Invalid DATABASE_URL. Expected a PostgreSQL URL like jdbc:postgresql://host:port/database or postgresql://host:port/database"
+            );
+        }
+    }
+
+    private void validateSupabaseRuntimeDatabase(String jdbcUrl, boolean testProfile) {
+        if (testProfile) {
+            return;
+        }
+
+        String lower = jdbcUrl.toLowerCase();
+        if (lower.contains("//localhost:")
+                || lower.contains("//127.0.0.1:")
+                || lower.contains("//host.docker.internal:")
+                || lower.contains("//loadix-postgres:")) {
+            throw new IllegalStateException(
+                    "Refusing to use local PostgreSQL for application runtime. Set DATABASE_URL to Supabase PostgreSQL."
             );
         }
     }
@@ -117,5 +123,14 @@ public class DatabaseConfig {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private boolean isTestProfile(Environment environment) {
+        for (String profile : environment.getActiveProfiles()) {
+            if ("test".equals(profile)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

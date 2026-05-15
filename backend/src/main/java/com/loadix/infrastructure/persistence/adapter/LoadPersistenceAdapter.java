@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import com.loadix.application.port.out.LoadPort;
@@ -29,17 +32,43 @@ import com.loadix.infrastructure.persistence.repository.LoadJpaRepository;
 @Component
 public class LoadPersistenceAdapter implements LoadPort {
 
-    private final LoadJpaRepository loadJpaRepository;
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoadPersistenceAdapter.class);
 
-    public LoadPersistenceAdapter(LoadJpaRepository loadJpaRepository) {
+    private final LoadJpaRepository loadJpaRepository;
+    private final JdbcTemplate jdbcTemplate;
+
+    public LoadPersistenceAdapter(LoadJpaRepository loadJpaRepository, JdbcTemplate jdbcTemplate) {
         this.loadJpaRepository = loadJpaRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public PersistedLoadPublication save(LoadPublication loadPublication) {
+        LOGGER.info(
+            "LOAD_SAVE_REQUEST table=loadix.loads warehouse_user_id={} created_by_user_id={} origin_city={} destination_city={} status={}",
+            loadPublication.warehouseUserId(),
+            loadPublication.createdByUserId(),
+            loadPublication.originCity(),
+            loadPublication.destinationCity(),
+            loadPublication.status()
+        );
+
         LoadJpaEntity entity = LoadJpaEntity.fromDomain(loadPublication);
         LoadJpaEntity persisted = loadJpaRepository.save(entity);
-        return persisted.toDomain();
+        PersistedLoadPublication saved = persisted.toDomain();
+
+        LOGGER.info(
+            "LOAD_SAVE_RESULT table=loadix.loads db_fingerprint=\"{}\" id={} warehouse_user_id={} created_by_user_id={} status={} created_at={} updated_at={}",
+            dbFingerprint(),
+            saved.id(),
+            saved.warehouseUserId(),
+            saved.createdByUserId(),
+            saved.status(),
+            saved.createdAt(),
+            saved.updatedAt()
+        );
+
+        return saved;
     }
 
     @Override
@@ -62,9 +91,23 @@ public class LoadPersistenceAdapter implements LoadPort {
             .and(byPickupDateTo(pickupDateTo));
 
         Page<LoadJpaEntity> result = loadJpaRepository.findAll(specification, pageable);
+        List<PersistedLoadPublication> items = result.getContent().stream().map(LoadJpaEntity::toDomain).toList();
+
+        LOGGER.info(
+            "LOAD_FIND_MINE table=loadix.loads db_fingerprint=\"{}\" warehouse_user_id={} page={} size={} sort={} pickup_date_from={} pickup_date_to={} total_elements={} returned_ids={}",
+            dbFingerprint(),
+            warehouseUserId,
+            page,
+            size,
+            sortAsc ? "createdAt:asc" : "createdAt:desc",
+            pickupDateFrom,
+            pickupDateTo,
+            result.getTotalElements(),
+            items.stream().map(load -> load.id().toString()).toList()
+        );
 
         return new LoadPageResult(
-            result.getContent().stream().map(LoadJpaEntity::toDomain).toList(),
+            items,
             result.getNumber(),
             result.getSize(),
             result.getTotalElements(),
@@ -95,9 +138,22 @@ public class LoadPersistenceAdapter implements LoadPort {
             .and(byPriceMax(filters.priceMax()));
 
         Page<LoadJpaEntity> result = loadJpaRepository.findAll(specification, pageable);
+        List<PersistedLoadPublication> items = result.getContent().stream().map(LoadJpaEntity::toDomain).toList();
+
+        LOGGER.info(
+            "LOAD_FIND_AVAILABLE table=loadix.loads db_fingerprint=\"{}\" status_filter={} page={} size={} sort={} filters={} total_elements={} returned_ids={}",
+            dbFingerprint(),
+            LoadStatus.PUBLISHED,
+            page,
+            size,
+            sortAsc ? "createdAt:asc" : "createdAt:desc",
+            filters,
+            result.getTotalElements(),
+            items.stream().map(load -> load.id().toString()).toList()
+        );
 
         return new LoadPageResult(
-            result.getContent().stream().map(LoadJpaEntity::toDomain).toList(),
+            items,
             result.getNumber(),
             result.getSize(),
             result.getTotalElements(),
@@ -114,7 +170,18 @@ public class LoadPersistenceAdapter implements LoadPort {
 
         existing.updateFromDomain(loadPublication);
         LoadJpaEntity persisted = loadJpaRepository.save(existing);
-        return persisted.toDomain();
+        PersistedLoadPublication saved = persisted.toDomain();
+
+        LOGGER.info(
+            "LOAD_UPDATE_RESULT table=loadix.loads db_fingerprint=\"{}\" id={} warehouse_user_id={} status={} updated_at={}",
+            dbFingerprint(),
+            saved.id(),
+            saved.warehouseUserId(),
+            saved.status(),
+            saved.updatedAt()
+        );
+
+        return saved;
     }
 
     @Override
@@ -178,6 +245,13 @@ public class LoadPersistenceAdapter implements LoadPort {
 
     private Specification<LoadJpaEntity> byWarehouseUserId(UUID warehouseUserId) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("warehouseUserId"), warehouseUserId);
+    }
+
+    private String dbFingerprint() {
+        return jdbcTemplate.queryForObject(
+            "select concat('database=', current_database(), '; schema=', current_schema(), '; user=', current_user, '; server=', coalesce(inet_server_addr()::text, 'unknown'), ':', coalesce(inet_server_port()::text, 'unknown'))",
+            String.class
+        );
     }
 
     private Specification<LoadJpaEntity> byPickupDateFrom(LocalDate pickupDateFrom) {

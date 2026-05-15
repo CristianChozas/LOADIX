@@ -8,8 +8,10 @@ import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.in.GetCarrierDashboardMetricsPort;
 import com.loadix.application.port.in.GetWarehouseDashboardMetricsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
+import com.loadix.application.port.in.ReserveLoadPort;
 import com.loadix.application.port.in.UpdateMyLoadPort;
 import com.loadix.application.port.in.UpdateMyLoadStatusPort;
+import com.loadix.application.port.out.LoadPaymentPort;
 import com.loadix.application.port.out.LoadPort;
 import com.loadix.application.port.out.UserAccountPort;
 import com.loadix.application.port.out.WarehouseProfilePort;
@@ -18,8 +20,10 @@ import com.loadix.application.usecase.load.GetAvailableLoadsUseCase;
 import com.loadix.application.usecase.load.GetCarrierDashboardMetricsUseCase;
 import com.loadix.application.usecase.load.GetWarehouseDashboardMetricsUseCase;
 import com.loadix.application.usecase.load.GetMyLoadsUseCase;
+import com.loadix.application.usecase.load.ReserveLoadUseCase;
 import com.loadix.application.usecase.load.UpdateMyLoadUseCase;
 import com.loadix.application.usecase.load.UpdateMyLoadStatusUseCase;
+import com.loadix.infrastructure.config.StripeProperties;
 
 @Configuration
 public class LoadConfig {
@@ -52,9 +56,10 @@ public class LoadConfig {
     @Bean
     public GetCarrierDashboardMetricsPort getCarrierDashboardMetricsPort(
         UserAccountPort userAccountPort,
-        LoadPort loadPort
+        LoadPort loadPort,
+        LoadPaymentPort loadPaymentPort
     ) {
-        return new GetCarrierDashboardMetricsUseCase(userAccountPort, loadPort);
+        return new GetCarrierDashboardMetricsUseCase(userAccountPort, loadPort, loadPaymentPort);
     }
 
     @Bean
@@ -79,5 +84,15 @@ public class LoadConfig {
         LoadPort loadPort
     ) {
         return new UpdateMyLoadStatusUseCase(userAccountPort, loadPort);
+    }
+
+    @Bean
+    public ReserveLoadPort reserveLoadPort(
+        UserAccountPort userAccountPort,
+        LoadPort loadPort,
+        LoadPaymentPort loadPaymentPort,
+        StripeProperties stripeProperties
+    ) {
+        return new ReserveLoadUseCase(userAccountPort, loadPort, loadPaymentPort, stripeProperties);
     }
 }

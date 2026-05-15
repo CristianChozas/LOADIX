@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(name = "CarrierDashboardResponse", description = "Carrier dashboard metrics payload")
 public record CarrierDashboardResponse(
+    @Schema(description = "Total loads reserved by the carrier")
+    long reservedLoads,
     @Schema(description = "Total loads currently available in the marketplace")
     long availableLoads,
     @Schema(description = "Current week marketplace activity split by weekday")
