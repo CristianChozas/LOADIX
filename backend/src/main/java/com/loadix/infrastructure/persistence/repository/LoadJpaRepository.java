@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,6 +35,39 @@ public interface LoadJpaRepository extends JpaRepository<LoadJpaEntity, UUID>, J
         String status,
         Instant fromInclusive,
         Instant toExclusive
+    );
+
+    @Query(
+        value = """
+            select l
+            from LoadJpaEntity l
+            where l.status in :loadStatuses
+              and exists (
+                  select 1
+                  from LoadPaymentJpaEntity lp
+                  where lp.loadId = l.id
+                    and lp.carrierUserId = :carrierUserId
+                    and lp.status = :paymentStatus
+              )
+        """,
+        countQuery = """
+            select count(l)
+            from LoadJpaEntity l
+            where l.status in :loadStatuses
+              and exists (
+                  select 1
+                  from LoadPaymentJpaEntity lp
+                  where lp.loadId = l.id
+                    and lp.carrierUserId = :carrierUserId
+                    and lp.status = :paymentStatus
+              )
+        """
+    )
+    Page<LoadJpaEntity> findByCarrierUserIdAndLoadStatusInAndPaymentStatus(
+        @Param("carrierUserId") UUID carrierUserId,
+        @Param("loadStatuses") List<String> loadStatuses,
+        @Param("paymentStatus") String paymentStatus,
+        Pageable pageable
     );
 
     @Query("""

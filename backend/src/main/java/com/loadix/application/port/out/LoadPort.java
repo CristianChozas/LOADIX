@@ -27,6 +27,14 @@ public interface LoadPort {
         LocalDate pickupDateTo
     );
 
+    LoadPageResult findByCarrierUserIdAndStatuses(
+        UUID carrierUserId,
+        int page,
+        int size,
+        boolean sortAsc,
+        List<LoadStatus> statuses
+    );
+
     LoadPageResult findAvailableLoads(
         int page,
         int size,

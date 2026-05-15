@@ -25,6 +25,7 @@ import com.loadix.application.dto.response.WarehouseDashboardResponse;
 import com.loadix.application.port.in.CreateLoadPort;
 import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.in.GetCarrierDashboardMetricsPort;
+import com.loadix.application.port.in.GetCarrierMyLoadsPort;
 import com.loadix.application.port.in.GetWarehouseDashboardMetricsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
 import com.loadix.application.port.in.ReserveLoadPort;
@@ -52,6 +53,7 @@ public class LoadController {
     private final GetMyLoadsPort getMyLoadsPort;
     private final GetWarehouseDashboardMetricsPort getWarehouseDashboardMetricsPort;
     private final GetCarrierDashboardMetricsPort getCarrierDashboardMetricsPort;
+    private final GetCarrierMyLoadsPort getCarrierMyLoadsPort;
     private final GetAvailableLoadsPort getAvailableLoadsPort;
     private final UpdateMyLoadPort updateMyLoadPort;
     private final UpdateMyLoadStatusPort updateMyLoadStatusPort;
@@ -62,6 +64,7 @@ public class LoadController {
         GetMyLoadsPort getMyLoadsPort,
         GetWarehouseDashboardMetricsPort getWarehouseDashboardMetricsPort,
         GetCarrierDashboardMetricsPort getCarrierDashboardMetricsPort,
+        GetCarrierMyLoadsPort getCarrierMyLoadsPort,
         GetAvailableLoadsPort getAvailableLoadsPort,
         UpdateMyLoadPort updateMyLoadPort,
         UpdateMyLoadStatusPort updateMyLoadStatusPort,
@@ -71,6 +74,7 @@ public class LoadController {
         this.getMyLoadsPort = getMyLoadsPort;
         this.getWarehouseDashboardMetricsPort = getWarehouseDashboardMetricsPort;
         this.getCarrierDashboardMetricsPort = getCarrierDashboardMetricsPort;
+        this.getCarrierMyLoadsPort = getCarrierMyLoadsPort;
         this.getAvailableLoadsPort = getAvailableLoadsPort;
         this.updateMyLoadPort = updateMyLoadPort;
         this.updateMyLoadStatusPort = updateMyLoadStatusPort;
@@ -156,6 +160,27 @@ public class LoadController {
         }
 
         return getCarrierDashboardMetricsPort.execute(authentication.getName());
+    }
+
+    @GetMapping("/carrier/mine")
+    @Operation(summary = "List my reserved and in-transit loads as carrier")
+    @ApiResponse(responseCode = "200", description = "Carrier loads retrieved successfully",
+        content = @Content(schema = @Schema(implementation = MyLoadsPageResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid query params")
+    @ApiResponse(responseCode = "401", description = "Unauthenticated")
+    @ApiResponse(responseCode = "403", description = "Forbidden for current user")
+    public MyLoadsPageResponse getCarrierMyLoads(
+        @Parameter(hidden = true) Authentication authentication,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "desc") String sort
+    ) {
+        if (authentication == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        boolean sortAsc = "asc".equalsIgnoreCase(sort);
+        return getCarrierMyLoadsPort.execute(authentication.getName(), page, size, sortAsc);
     }
 
     @GetMapping("/available")

@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import com.loadix.application.port.in.CreateLoadPort;
 import com.loadix.application.port.in.GetAvailableLoadsPort;
 import com.loadix.application.port.in.GetCarrierDashboardMetricsPort;
+import com.loadix.application.port.in.GetCarrierMyLoadsPort;
 import com.loadix.application.port.in.GetWarehouseDashboardMetricsPort;
 import com.loadix.application.port.in.GetMyLoadsPort;
 import com.loadix.application.port.in.ReserveLoadPort;
@@ -18,6 +19,7 @@ import com.loadix.application.port.out.WarehouseProfilePort;
 import com.loadix.application.usecase.load.CreateLoadUseCase;
 import com.loadix.application.usecase.load.GetAvailableLoadsUseCase;
 import com.loadix.application.usecase.load.GetCarrierDashboardMetricsUseCase;
+import com.loadix.application.usecase.load.GetCarrierMyLoadsUseCase;
 import com.loadix.application.usecase.load.GetWarehouseDashboardMetricsUseCase;
 import com.loadix.application.usecase.load.GetMyLoadsUseCase;
 import com.loadix.application.usecase.load.ReserveLoadUseCase;
@@ -60,6 +62,14 @@ public class LoadConfig {
         LoadPaymentPort loadPaymentPort
     ) {
         return new GetCarrierDashboardMetricsUseCase(userAccountPort, loadPort, loadPaymentPort);
+    }
+
+    @Bean
+    public GetCarrierMyLoadsPort getCarrierMyLoadsPort(
+        UserAccountPort userAccountPort,
+        LoadPort loadPort
+    ) {
+        return new GetCarrierMyLoadsUseCase(userAccountPort, loadPort);
     }
 
     @Bean

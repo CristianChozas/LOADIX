@@ -26,6 +26,7 @@ import com.loadix.domain.model.LoadStatusCount;
 import com.loadix.domain.model.PersistedLoadPublication;
 import com.loadix.domain.valueobject.CargoType;
 import com.loadix.domain.valueobject.LoadStatus;
+import com.loadix.domain.valueobject.PaymentStatus;
 import com.loadix.infrastructure.persistence.entity.LoadJpaEntity;
 import com.loadix.infrastructure.persistence.repository.LoadJpaRepository;
 
@@ -102,6 +103,53 @@ public class LoadPersistenceAdapter implements LoadPort {
             sortAsc ? "createdAt:asc" : "createdAt:desc",
             pickupDateFrom,
             pickupDateTo,
+            result.getTotalElements(),
+            items.stream().map(load -> load.id().toString()).toList()
+        );
+
+        return new LoadPageResult(
+            items,
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages(),
+            result.hasNext(),
+            result.hasPrevious()
+        );
+    }
+
+    @Override
+    public LoadPageResult findByCarrierUserIdAndStatuses(
+        UUID carrierUserId,
+        int page,
+        int size,
+        boolean sortAsc,
+        List<LoadStatus> statuses
+    ) {
+        Sort sort = sortAsc
+            ? Sort.by(Sort.Direction.ASC, "createdAt")
+            : Sort.by(Sort.Direction.DESC, "createdAt");
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        List<String> loadStatuses = statuses.stream().map(Enum::name).toList();
+
+        Page<LoadJpaEntity> result = loadJpaRepository.findByCarrierUserIdAndLoadStatusInAndPaymentStatus(
+            carrierUserId,
+            loadStatuses,
+            PaymentStatus.CONFIRMED.name(),
+            pageable
+        );
+
+        List<PersistedLoadPublication> items = result.getContent().stream().map(LoadJpaEntity::toDomain).toList();
+
+        LOGGER.info(
+            "LOAD_FIND_CARRIER_MINE table=loadix.loads db_fingerprint=\"{}\" carrier_user_id={} page={} size={} sort={} status_filter={} total_elements={} returned_ids={}",
+            dbFingerprint(),
+            carrierUserId,
+            page,
+            size,
+            sortAsc ? "createdAt:asc" : "createdAt:desc",
+            loadStatuses,
             result.getTotalElements(),
             items.stream().map(load -> load.id().toString()).toList()
         );

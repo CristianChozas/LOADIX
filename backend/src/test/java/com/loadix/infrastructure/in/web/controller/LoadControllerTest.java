@@ -18,7 +18,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.util.UUID;
 
+import com.loadix.domain.model.LoadPayment;
+import com.loadix.domain.valueobject.PaymentProvider;
+import com.loadix.domain.valueobject.PaymentStatus;
+import com.loadix.infrastructure.persistence.entity.LoadPaymentJpaEntity;
+import com.loadix.infrastructure.persistence.repository.LoadPaymentJpaRepository;
+import com.loadix.infrastructure.persistence.repository.UserJpaRepository;
 import com.loadix.support.IntegrationTestContainers;
 
 import jakarta.servlet.http.Cookie;
@@ -29,6 +37,12 @@ class LoadControllerTest extends IntegrationTestContainers {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserJpaRepository userJpaRepository;
+
+    @Autowired
+    private LoadPaymentJpaRepository loadPaymentJpaRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -336,6 +350,93 @@ class LoadControllerTest extends IntegrationTestContainers {
 
         mockMvc.perform(get("/api/v1/loads/dashboard/carrier")
                 .cookie(authCookie))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void listsCarrierMyLoadsWithReservedAndInTransitStatuses() throws Exception {
+        Cookie warehouseCookie = registerAndLoginWarehouseUser("carrier-mine-warehouse@loadix.test");
+        createWarehouseProfile(warehouseCookie);
+
+        MvcResult firstLoadResult = publishLoad(warehouseCookie, "Madrid", "2099-10-10", 700.0);
+        MvcResult secondLoadResult = publishLoad(warehouseCookie, "Sevilla", "2099-10-12", 930.0);
+
+        String firstLoadId = objectMapper.readTree(firstLoadResult.getResponse().getContentAsString()).get("id").asText();
+        String secondLoadId = objectMapper.readTree(secondLoadResult.getResponse().getContentAsString()).get("id").asText();
+
+        mockMvc.perform(patch("/api/v1/loads/{id}/status", firstLoadId)
+                .cookie(warehouseCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"status\":\"RESERVED\"}"))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/v1/loads/{id}/status", secondLoadId)
+                .cookie(warehouseCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"status\":\"RESERVED\"}"))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/v1/loads/{id}/status", secondLoadId)
+                .cookie(warehouseCookie)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{" +
+                    "\"status\":\"IN_TRANSIT\"}"))
+            .andExpect(status().isOk());
+
+        String carrierEmail = "carrier-mine@loadix.test";
+        Cookie carrierCookie = registerAndLoginCarrierUser(carrierEmail);
+        UUID carrierUserId = userJpaRepository.findByEmailIgnoreCase(carrierEmail)
+            .orElseThrow()
+            .getId();
+
+        loadPaymentJpaRepository.save(LoadPaymentJpaEntity.fromDomain(new LoadPayment(
+            null,
+            UUID.fromString(firstLoadId),
+            carrierUserId,
+            PaymentProvider.STRIPE,
+            "pi_test_1",
+            BigDecimal.valueOf(700.00),
+            "EUR",
+            PaymentStatus.CONFIRMED,
+            null,
+            null
+        )));
+
+        loadPaymentJpaRepository.save(LoadPaymentJpaEntity.fromDomain(new LoadPayment(
+            null,
+            UUID.fromString(secondLoadId),
+            carrierUserId,
+            PaymentProvider.STRIPE,
+            "pi_test_2",
+            BigDecimal.valueOf(930.00),
+            "EUR",
+            PaymentStatus.CONFIRMED,
+            null,
+            null
+        )));
+
+        mockMvc.perform(get("/api/v1/loads/carrier/mine")
+                .cookie(carrierCookie)
+                .param("page", "0")
+                .param("size", "10")
+                .param("sort", "desc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(2))
+            .andExpect(jsonPath("$.items[0].status").value("IN_TRANSIT"))
+            .andExpect(jsonPath("$.items[1].status").value("RESERVED"));
+    }
+
+    @Test
+    void rejectsCarrierMyLoadsForWarehouseRole() throws Exception {
+        Cookie warehouseCookie = registerAndLoginWarehouseUser("carrier-mine-forbidden@loadix.test");
+
+        mockMvc.perform(get("/api/v1/loads/carrier/mine")
+                .cookie(warehouseCookie)
+                .param("page", "0")
+                .param("size", "10")
+                .param("sort", "desc"))
             .andExpect(status().isForbidden());
     }
 
